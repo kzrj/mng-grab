@@ -28,7 +28,9 @@ async def get_customer(customer_id: int, service: CustomerService = Depends(get_
 @router.post("", response_model=CustomerRead, status_code=201)
 async def create_customer(data: CustomerCreate, service: CustomerService = Depends(get_customer_service)):
     try:
-        entity = await service.create(phone=data.phone, description=data.description)
+        entity = await service.create(
+            phone=data.phone, description=data.description, account_id=data.account_id
+        )
         return CustomerRead.model_validate(entity)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -40,7 +42,12 @@ async def update_customer(
     data: CustomerUpdate,
     service: CustomerService = Depends(get_customer_service),
 ):
-    entity = await service.update(customer_id, phone=data.phone, description=data.description)
+    entity = await service.update(
+        customer_id,
+        phone=data.phone,
+        description=data.description,
+        account_id=data.account_id,
+    )
     if not entity:
         raise HTTPException(status_code=404, detail="Customer not found")
     try:

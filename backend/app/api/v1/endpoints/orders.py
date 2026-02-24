@@ -1,6 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.dependencies import get_order_service
+from app.api.dependencies import (
+    get_current_customer_id,
+    get_optional_courier_id,
+    get_order_service,
+)
 from app.application.order.service import OrderService
 from app.api.dto.order import OrderCreate, OrderRead, OrderUpdate
 
@@ -26,16 +30,21 @@ async def get_order(order_id: int, service: OrderService = Depends(get_order_ser
 
 
 @router.post("", response_model=OrderRead, status_code=201)
-async def create_order(data: OrderCreate, service: OrderService = Depends(get_order_service)):
+async def create_order(
+    data: OrderCreate,
+    customer_id: int = Depends(get_current_customer_id),
+    service: OrderService = Depends(get_order_service),
+):
+    """Создать заказ. Только авторизованный заказчик; customer_id берётся из JWT."""
     try:
         entity = await service.create(
             where_to=data.where_to,
             where_from=data.where_from,
             price=data.price,
             date_when=data.date_when,
-            customer_id=data.customer_id,
+            customer_id=customer_id,
             status=data.status,
-            courier_id=data.courier_id,
+            courier_id=None,
         )
         return OrderRead.model_validate(entity)
     except ValueError as e:
@@ -47,7 +56,14 @@ async def update_order(
     order_id: int,
     data: OrderUpdate,
     service: OrderService = Depends(get_order_service),
+    current_courier_id: int | None = Depends(get_optional_courier_id),
 ):
+    """Обновить заказ. Назначить курьера (courier_id) может только курьер, и только себя."""
+    courier_id = data.courier_id
+    if courier_id is not None:
+        if current_courier_id is None:
+            raise HTTPException(status_code=403, detail="Назначить курьера может только курьер")
+        courier_id = current_courier_id  # курьер может назначить только себя
     entity = await service.update(
         order_id,
         where_to=data.where_to,
@@ -55,7 +71,7 @@ async def update_order(
         price=data.price,
         status=data.status,
         date_when=data.date_when,
-        courier_id=data.courier_id,
+        courier_id=courier_id,
     )
     if not entity:
         raise HTTPException(status_code=404, detail="Order not found")

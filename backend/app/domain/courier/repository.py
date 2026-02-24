@@ -11,6 +11,10 @@ class ICourierRepository(ABC):
         ...
 
     @abstractmethod
+    async def get_by_account_id(self, account_id: int) -> Courier | None:
+        ...
+
+    @abstractmethod
     async def get_all(self, *, skip: int = 0, limit: int = 100) -> list[Courier]:
         ...
 

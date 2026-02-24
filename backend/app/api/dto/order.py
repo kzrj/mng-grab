@@ -6,15 +6,20 @@ from pydantic import BaseModel, ConfigDict, Field
 class OrderBase(BaseModel):
     where_to: str = Field(..., min_length=1, max_length=255)
     where_from: str = Field(..., min_length=1, max_length=255)
-    price: float = Field(..., ge=0)
+    price: float = Field(default=0, ge=0)
     status: str = Field(default="new", max_length=50)
     date_when: date
     customer_id: int
     courier_id: int | None = None
 
 
-class OrderCreate(OrderBase):
-    pass
+class OrderCreate(BaseModel):
+    """Создание заказа. customer_id задаётся на бэкенде из JWT (только заказчик)."""
+    where_to: str = Field(..., min_length=1, max_length=255)
+    where_from: str = Field(..., min_length=1, max_length=255)
+    price: float = Field(default=0, ge=0)
+    date_when: date
+    status: str = Field(default="new", max_length=50)
 
 
 class OrderUpdate(BaseModel):

@@ -28,7 +28,9 @@ async def get_courier(courier_id: int, service: CourierService = Depends(get_cou
 @router.post("", response_model=CourierRead, status_code=201)
 async def create_courier(data: CourierCreate, service: CourierService = Depends(get_courier_service)):
     try:
-        entity = await service.create(phone=data.phone, description=data.description)
+        entity = await service.create(
+            phone=data.phone, description=data.description, account_id=data.account_id
+        )
         return CourierRead.model_validate(entity)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -40,7 +42,12 @@ async def update_courier(
     data: CourierUpdate,
     service: CourierService = Depends(get_courier_service),
 ):
-    entity = await service.update(courier_id, phone=data.phone, description=data.description)
+    entity = await service.update(
+        courier_id,
+        phone=data.phone,
+        description=data.description,
+        account_id=data.account_id,
+    )
     if not entity:
         raise HTTPException(status_code=404, detail="Courier not found")
     try:

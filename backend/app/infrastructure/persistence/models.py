@@ -18,13 +18,27 @@ class TimestampMixin:
     )
 
 
+class AccountModel(Base, TimestampMixin):
+    __tablename__ = "accounts"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True, index=True)
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    customers: Mapped[list["CustomerModel"]] = relationship("CustomerModel", back_populates="account")
+    couriers: Mapped[list["CourierModel"]] = relationship("CourierModel", back_populates="account")
+
+
 class CustomerModel(Base, TimestampMixin):
     __tablename__ = "customers"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     phone: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    account_id: Mapped[int | None] = mapped_column(ForeignKey("accounts.id"), nullable=True, index=True)
 
+    account: Mapped["AccountModel | None"] = relationship("AccountModel", back_populates="customers")
     orders: Mapped[list["OrderModel"]] = relationship("OrderModel", back_populates="owner")
     reviews: Mapped[list["ReviewModel"]] = relationship("ReviewModel", back_populates="customer")
 
@@ -35,7 +49,9 @@ class CourierModel(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     phone: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    account_id: Mapped[int | None] = mapped_column(ForeignKey("accounts.id"), nullable=True, index=True)
 
+    account: Mapped["AccountModel | None"] = relationship("AccountModel", back_populates="couriers")
     orders: Mapped[list["OrderModel"]] = relationship("OrderModel", back_populates="executor")
     reviews: Mapped[list["ReviewModel"]] = relationship("ReviewModel", back_populates="courier")
 

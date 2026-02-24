@@ -11,6 +11,7 @@ class Customer:
     id: int
     phone: str
     description: str | None
+    account_id: int | None
     created_at: datetime
     updated_at: datetime
 

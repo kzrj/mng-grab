@@ -9,17 +9,19 @@ class CustomerBase(BaseModel):
 
 
 class CustomerCreate(CustomerBase):
-    pass
+    account_id: int | None = None
 
 
 class CustomerUpdate(BaseModel):
     phone: str | None = Field(None, min_length=1, max_length=20)
     description: str | None = None
+    account_id: int | None = None
 
 
 class CustomerRead(CustomerBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    account_id: int | None = None
     created_at: datetime
     updated_at: datetime

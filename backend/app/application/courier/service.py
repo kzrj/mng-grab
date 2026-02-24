@@ -10,13 +10,16 @@ class CourierService:
     def __init__(self, repository: ICourierRepository):
         self._repo = repository
 
-    async def create(self, phone: str, description: str | None = None) -> Courier:
+    async def create(
+        self, phone: str, description: str | None = None, account_id: int | None = None
+    ) -> Courier:
         if not phone or not phone.strip():
             raise ValueError("Телефон обязателен")
         courier = Courier(
             id=0,
             phone=phone.strip(),
             description=description,
+            account_id=account_id,
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
@@ -28,11 +31,19 @@ class CourierService:
     async def get_all(self, *, skip: int = 0, limit: int = 100) -> list[Courier]:
         return await self._repo.get_all(skip=skip, limit=limit)
 
-    async def update(self, id: int, phone: str | None = None, description: str | None = None) -> Courier | None:
+    async def update(
+        self,
+        id: int,
+        phone: str | None = None,
+        description: str | None = None,
+        account_id: int | None = None,
+    ) -> Courier | None:
         courier = await self._repo.get_by_id(id)
         if not courier:
             return None
         courier.update(phone=phone, description=description)
+        if account_id is not None:
+            courier.account_id = account_id
         return await self._repo.save(courier)
 
     async def delete(self, id: int) -> bool:

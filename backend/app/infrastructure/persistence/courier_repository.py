@@ -15,6 +15,7 @@ class CourierRepository(ICourierRepository):
             id=model.id,
             phone=model.phone,
             description=model.description,
+            account_id=model.account_id,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )
@@ -24,12 +25,23 @@ class CourierRepository(ICourierRepository):
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
+    async def get_by_account_id(self, account_id: int) -> Courier | None:
+        result = await self._session.execute(
+            select(CourierModel).where(CourierModel.account_id == account_id)
+        )
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
     async def get_all(self, *, skip: int = 0, limit: int = 100) -> list[Courier]:
         result = await self._session.execute(select(CourierModel).offset(skip).limit(limit))
         return [self._to_entity(m) for m in result.scalars().all()]
 
     async def add(self, courier: Courier) -> Courier:
-        model = CourierModel(phone=courier.phone, description=courier.description)
+        model = CourierModel(
+            phone=courier.phone,
+            description=courier.description,
+            account_id=courier.account_id,
+        )
         self._session.add(model)
         await self._session.flush()
         await self._session.refresh(model)
@@ -40,6 +52,7 @@ class CourierRepository(ICourierRepository):
         model = result.scalar_one()
         model.phone = courier.phone
         model.description = courier.description
+        model.account_id = courier.account_id
         await self._session.flush()
         await self._session.refresh(model)
         return self._to_entity(model)
