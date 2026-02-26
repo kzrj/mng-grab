@@ -3,16 +3,17 @@
 services:
   db:
     image: postgres:16-alpine
+    env_file: .env
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mng_grab
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-mng_grab}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d mng_grab"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-mng_grab}"]
       interval: 2s
       timeout: 5s
       retries: 10
@@ -23,9 +24,10 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    env_file: .env
     environment:
-      - ENV=development
-      - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/mng_grab
+      - ENV=${ENV:-development}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-mng_grab}
     depends_on:
       db:
         condition: service_healthy
@@ -33,7 +35,7 @@ services:
   # Сервер разработки Expo (Metro + Dev Tools). Для доступа с телефона задайте EXPO_PACKAGER_HOSTNAME=IP_ВАШЕГО_СЕРВЕРА
   expo:
     build: ./ubgrab
-    command: ["npx", "expo", "start", "--lan"]
+    command: ["npx", "expo", "start", "--tunnel"]
     ports:
       - "8081:8081"   # Metro bundler
       - "19000:19000" # Expo Dev Tools
