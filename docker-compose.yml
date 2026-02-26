@@ -33,6 +33,7 @@ services:
   # Сервер разработки Expo (Metro + Dev Tools). Для доступа с телефона задайте EXPO_PACKAGER_HOSTNAME=IP_ВАШЕГО_СЕРВЕРА
   expo:
     build: ./ubgrab
+    command: ["npx", "expo", "start", "--host", "0.0.0.0"]
     ports:
       - "8081:8081"   # Metro bundler
       - "19000:19000" # Expo Dev Tools
