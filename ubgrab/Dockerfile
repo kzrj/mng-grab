@@ -23,4 +23,4 @@ EXPOSE 8081 19000 19001
 ENV EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
 ENV CI=1
 
-CMD ["npx", "expo", "start", "--host", "0.0.0.0"]
+CMD ["npx", "expo", "start", "--lan"]
