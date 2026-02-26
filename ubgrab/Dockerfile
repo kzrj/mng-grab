@@ -1,11 +1,17 @@
 # Образ для удалённой разработки Expo (Metro + Dev Tools)
+# syntax=docker/dockerfile:1 — для BuildKit (cache mount); если не используется, уберите --mount ниже
 FROM node:20-alpine
 
 WORKDIR /app
 
 # Установка зависимостей (кэшируется отдельным слоем)
+# — progress и verbose: видим прогресс, чтобы не казалось, что сборка зависла
+# — cache mount: ускоряет повторные сборки и снижает нагрузку на сеть
+# — NODE_OPTIONS: лимит памяти для Node (1536 МБ для слабых машин; если RAM много — можно 3072)
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    NODE_OPTIONS=--max-old-space-size=1536 \
+    npm ci --progress=true --loglevel=info
 
 # Код приложения монтируется через volume в docker-compose
 COPY . .

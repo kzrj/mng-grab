@@ -1,3 +1,5 @@
+# На слабой машине сначала соберите по одному: docker compose build backend && docker compose build expo
+# затем: docker compose up
 services:
   db:
     image: postgres:16-alpine
