@@ -5,11 +5,11 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Установка зависимостей (кэшируется отдельным слоем)
-# — progress и verbose: видим прогресс, чтобы не казалось, что сборка зависла
-# — cache mount: ускоряет повторные сборки и снижает нагрузку на сеть
-# — NODE_OPTIONS: лимит памяти для Node (1536 МБ для слабых машин; если RAM много — можно 3072)
+# Для US (Iowa и т.д.) оставляем registry.npmjs.org. Если качает по часу на пакет — проверьте лимиты egress/сети в GCP.
 COPY package.json package-lock.json* ./
 RUN --mount=type=cache,target=/root/.npm \
+    npm config set fetch-timeout 600000 && \
+    npm config set fetch-retries 5 && \
     NODE_OPTIONS=--max-old-space-size=1536 \
     npm ci --progress=true --loglevel=info
 
@@ -23,4 +23,4 @@ EXPOSE 8081 19000 19001
 ENV EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
 ENV CI=1
 
-CMD ["npx", "expo", "start", "--lan", "--host", "0.0.0.0"]
+CMD ["npx", "expo", "start", "--host", "0.0.0.0"]

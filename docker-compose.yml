@@ -11,6 +11,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d mng_grab"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
 
   backend:
     build: ./backend
@@ -22,7 +27,8 @@ services:
       - ENV=development
       - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/mng_grab
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   # Сервер разработки Expo (Metro + Dev Tools). Для доступа с телефона задайте EXPO_PACKAGER_HOSTNAME=IP_ВАШЕГО_СЕРВЕРА
   expo:
