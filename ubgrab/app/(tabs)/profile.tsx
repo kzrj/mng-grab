@@ -13,8 +13,9 @@ import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/auth';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
-const API_BASE = 'http://192.168.0.14:8000/api/v1';
-const ME_URL = `${API_BASE}/auth/me`;
+import { API_V1 } from '@/constants/api';
+
+const ME_URL = `${API_V1}/auth/me`;
 
 type AccountInfo = {
   id: number;

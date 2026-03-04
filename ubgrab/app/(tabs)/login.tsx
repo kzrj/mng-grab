@@ -13,8 +13,9 @@ import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { useAuth } from '@/context/auth';
 
-const API_BASE = 'http://192.168.0.14:8000/api/v1';
-const LOGIN_URL = `${API_BASE}/auth/login`;
+import { API_V1 } from '@/constants/api';
+
+const LOGIN_URL = `${API_V1}/auth/login`;
 const FETCH_TIMEOUT_MS = 15000;
 
 export { getStoredToken } from '@/lib/auth-storage';

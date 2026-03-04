@@ -9,8 +9,9 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-const API_BASE = 'http://192.168.0.14:8000/api/v1';
-const ORDERS_URL = `${API_BASE}/orders`;
+import { API_V1 } from '@/constants/api';
+
+const ORDERS_URL = `${API_V1}/orders`;
 const FETCH_TIMEOUT_MS = 10000;
 
 type Order = {

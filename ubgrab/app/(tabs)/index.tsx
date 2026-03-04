@@ -9,9 +9,10 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-const API_BASE = 'http://192.168.0.14:8000/api/v1';
-const SEED_FILL_URL = `${API_BASE}/seed/fill`;
-const SEED_CLEAR_URL = `${API_BASE}/seed/clear`;
+import { API_V1 } from '@/constants/api';
+
+const SEED_FILL_URL = `${API_V1}/seed/fill`;
+const SEED_CLEAR_URL = `${API_V1}/seed/clear`;
 const FETCH_TIMEOUT_MS = 15000;
 
 async function fetchApi(

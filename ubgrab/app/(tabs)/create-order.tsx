@@ -16,6 +16,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/auth';
+import { API_V1 } from '@/constants/api';
 
 function formatDateForApi(d: Date): string {
   const y = d.getFullYear();
@@ -32,9 +33,8 @@ function formatDateDisplay(d: Date): string {
   });
 }
 
-const API_BASE = 'http://192.168.0.14:8000/api/v1';
-const ORDERS_URL = `${API_BASE}/orders`;
-const COURIERS_URL = `${API_BASE}/couriers`;
+const ORDERS_URL = `${API_V1}/orders`;
+const COURIERS_URL = `${API_V1}/couriers`;
 const FETCH_TIMEOUT_MS = 10000;
 
 type Courier = { id: number; phone: string; description: string | null };
