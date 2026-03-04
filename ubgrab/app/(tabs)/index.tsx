@@ -9,7 +9,7 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-import { API_V1 } from '@/constants/api';
+import { API_BASE, API_V1 } from '@/constants/api';
 
 const SEED_FILL_URL = `${API_V1}/seed/fill`;
 const SEED_CLEAR_URL = `${API_V1}/seed/clear`;
@@ -98,6 +98,9 @@ export default function HomeScreen() {
       <ThemedText style={styles.subtitle}>
         Добро пожаловать в приложение.
       </ThemedText>
+      <ThemedText style={styles.apiHint}>
+        API: {API_BASE}
+      </ThemedText>
 
       <Pressable
         style={({ pressed }) => [
@@ -152,7 +155,12 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: 'center',
     opacity: 0.8,
-    marginBottom: 32,
+    marginBottom: 8,
+  },
+  apiHint: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginBottom: 24,
   },
   button: {
     backgroundColor: '#0a7ea4',
