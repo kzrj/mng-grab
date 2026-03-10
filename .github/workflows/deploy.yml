@@ -1,0 +1,25 @@
+name: Build and deploy to server
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  REPO_DIR: /home/kzrster/mng-grab   # путь к клону репо на сервере (при необходимости измените)
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Pull latest code
+        run: |
+          cd "${{ env.REPO_DIR }}"
+          git pull
+
+      - name: Stop and start containers
+        run: |
+          cd "${{ env.REPO_DIR }}"
+          docker compose down
+          docker compose up -d
