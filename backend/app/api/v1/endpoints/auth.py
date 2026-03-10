@@ -1,11 +1,18 @@
-"""Логин: phone + password → JWT с account_id (sub)."""
+"""Логин и регистрация: phone + password → JWT с account_id (sub)."""
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.dependencies import get_account_service, get_current_account_id
+from app.api.dependencies import (
+    get_account_service,
+    get_courier_service,
+    get_current_account_id,
+    get_customer_service,
+)
 from app.api.dto.account import AccountRead
-from app.api.dto.auth import LoginRequest, TokenResponse
+from app.api.dto.auth import LoginRequest, RegisterRequest, TokenResponse
 from app.application.account.service import AccountService
+from app.application.courier.service import CourierService
+from app.application.customer.service import CustomerService
 from app.core.security import create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -34,5 +41,32 @@ async def login(
         raise HTTPException(status_code=401, detail="Неверный телефон или пароль")
     if account.password != data.password:
         raise HTTPException(status_code=401, detail="Неверный телефон или пароль")
+    token = create_access_token(account.id)
+    return TokenResponse(access_token=token)
+
+
+@router.post("/register", response_model=TokenResponse)
+async def register(
+    data: RegisterRequest,
+    account_service: AccountService = Depends(get_account_service),
+    customer_service: CustomerService = Depends(get_customer_service),
+    courier_service: CourierService = Depends(get_courier_service),
+):
+    """Регистрация: имя, телефон, пароль, роль (заказчик/курьер). Создаёт account и запись customer или courier. Возвращает JWT."""
+    try:
+        account = await account_service.create(
+            name=data.name.strip(),
+            phone=data.phone.strip(),
+            password=data.password,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    phone = data.phone.strip()
+    if data.role == "customer":
+        await customer_service.create(phone=phone, account_id=account.id)
+    else:
+        await courier_service.create(phone=phone, account_id=account.id)
+
     token = create_access_token(account.id)
     return TokenResponse(access_token=token)

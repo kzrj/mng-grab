@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -45,7 +46,8 @@ export default function LoginScreen() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { setToken, clearToken } = useAuth();
+  const { setToken, clearToken, isAuthenticated } = useAuth();
+  const router = useRouter();
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
@@ -84,6 +86,10 @@ export default function LoginScreen() {
   const handleLogout = async () => {
     await clearToken();
     Alert.alert('Готово', 'Вы вышли из аккаунта.');
+  };
+
+  const handleRegister = () => {
+    router.push('/(tabs)/register');
   };
 
   return (
@@ -134,13 +140,23 @@ export default function LoginScreen() {
         )}
       </Pressable>
 
-      <Pressable
-        style={({ pressed }) => [styles.logoutButton, pressed && styles.buttonPressed]}
-        onPress={handleLogout}
-        disabled={loading}
-      >
-        <ThemedText style={styles.logoutButtonText}>Выйти из аккаунта</ThemedText>
-      </Pressable>
+      {isAuthenticated ? (
+        <Pressable
+          style={({ pressed }) => [styles.logoutButton, pressed && styles.buttonPressed]}
+          onPress={handleLogout}
+          disabled={loading}
+        >
+          <ThemedText style={styles.logoutButtonText}>Выйти из аккаунта</ThemedText>
+        </Pressable>
+      ) : (
+        <Pressable
+          style={({ pressed }) => [styles.logoutButton, pressed && styles.buttonPressed]}
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          <ThemedText style={styles.logoutButtonText}>Зарегистрироваться</ThemedText>
+        </Pressable>
+      )}
     </KeyboardAvoidingView>
   );
 }

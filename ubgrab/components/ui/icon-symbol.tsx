@@ -13,7 +13,7 @@ const MAPPING = {
   'person.2.fill': 'people',
   'shippingbox.fill': 'local-shipping',
   'plus.circle.fill': 'add-circle',
-  'person.crop.circle.fill': 'login',
+  'person.crop.circle.fill': 'person',
 } as IconMapping;
 
 /**

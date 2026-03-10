@@ -55,6 +55,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="register"
+        options={{
+          // Нет отдельной вкладки в таббаре, экран открывается из логина
+          tabBarButton: () => null,
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           href: !isAuthenticated ? null : undefined,
