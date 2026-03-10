@@ -5,14 +5,21 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  REPO_DIR: /home/kzrster/mng-grab   # путь к клону репо на сервере (при необходимости измените)
+
 jobs:
   deploy:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Build and run with Docker Compose
+      - name: Pull latest code
         run: |
-          docker compose up -d --build
+          cd "${{ env.REPO_DIR }}"
+          git pull
+
+      - name: Stop and start containers
+        run: |
+          cd "${{ env.REPO_DIR }}"
+          docker compose down
+          docker compose up -d
