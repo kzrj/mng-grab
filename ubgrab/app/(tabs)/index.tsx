@@ -93,10 +93,10 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <ThemedText type="title" style={styles.greeting}>
-        Привет!
+        Сайн байна уу!
       </ThemedText>
       <ThemedText style={styles.subtitle}>
-        Добро пожаловать в приложение.
+        Аппликейшнд тавтай морил.
       </ThemedText>
       <ThemedText style={styles.apiHint}>
         API: {API_BASE}
