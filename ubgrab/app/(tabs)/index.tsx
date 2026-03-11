@@ -1,26 +1,64 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Pressable,
+  RefreshControl,
+  SectionList,
   StyleSheet,
+  View,
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useLanguage } from '@/context/language';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 import { API_BASE, API_V1 } from '@/constants/api';
 
+const CUSTOMERS_URL = `${API_V1}/customers`;
+const COURIERS_URL = `${API_V1}/couriers`;
 const SEED_FILL_URL = `${API_V1}/seed/fill`;
 const SEED_CLEAR_URL = `${API_V1}/seed/clear`;
-const FETCH_TIMEOUT_MS = 15000;
+const FETCH_TIMEOUT_MS = 10000;
+
+type UserItem = {
+  id: number;
+  phone: string;
+  description: string | null;
+  account_id: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type SectionKey = 'customer' | 'courier';
+
+type UserSection = {
+  sectionKey: SectionKey;
+  title: string;
+  data: (UserItem & { _sectionKey: string })[];
+};
+
+const FETCH_SEED_TIMEOUT_MS = 15000;
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error(`Ошибка ${response.status}`);
+    return response.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 async function fetchApi(
   url: string,
   method: 'GET' | 'DELETE' = 'GET'
 ): Promise<Record<string, unknown>> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), FETCH_SEED_TIMEOUT_MS);
   try {
     const response = await fetch(url, { method, signal: controller.signal });
     if (!response.ok) {
@@ -33,10 +71,197 @@ async function fetchApi(
   }
 }
 
-export default function HomeScreen() {
+function formatDate(s: string) {
+  try {
+    return new Date(s).toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return s;
+  }
+}
+
+function UserItemRow({ item, t }: { item: UserItem; t: (k: import('@/i18n/translations').TranslationKey, p?: Record<string, string | number>) => string }) {
+  return (
+    <ThemedView style={styles.item}>
+      <ThemedText type="defaultSemiBold">{item.phone}</ThemedText>
+      {item.description ? (
+        <ThemedText style={styles.description}>{item.description}</ThemedText>
+      ) : null}
+      <ThemedText style={styles.meta}>
+        {t('test_id')}: {item.id}
+        {item.account_id != null ? ` · ${t('test_account')}: ${item.account_id}` : ''} · {formatDate(item.created_at)}
+      </ThemedText>
+    </ThemedView>
+  );
+}
+
+function CollapsibleSectionHeader({
+  title,
+  count,
+  expanded,
+  onToggle,
+}: {
+  title: string;
+  count: number;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const sectionBg = useThemeColor({}, 'border');
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.sectionHeader, { backgroundColor: sectionBg }, pressed && styles.sectionHeaderPressed]}
+      onPress={onToggle}
+    >
+      <ThemedText type="subtitle" style={styles.sectionTitle}>
+        {title} ({count})
+      </ThemedText>
+      <ThemedText style={styles.sectionChevron}>
+        {expanded ? '▼' : '▶'}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
+function MainHeader({
+  loadingFill,
+  loadingClear,
+  onFill,
+  onClear,
+  t,
+  locale,
+  onLocaleChange,
+}: {
+  loadingFill: boolean;
+  loadingClear: boolean;
+  onFill: () => void;
+  onClear: () => void;
+  t: (k: import('@/i18n/translations').TranslationKey, p?: Record<string, string | number>) => string;
+  locale: 'ru' | 'mn';
+  onLocaleChange: (locale: 'ru' | 'mn') => void;
+}) {
+  const loading = loadingFill || loadingClear;
+  const tintColor = useThemeColor({}, 'tint');
+  const errorColor = useThemeColor({}, 'error');
+  return (
+    <ThemedView style={styles.headerBlock}>
+      <View style={styles.langRow}>
+        <ThemedText style={styles.langLabel}>{t('test_lang')}: </ThemedText>
+        <Pressable
+          style={[styles.langButton, locale === 'ru' && styles.langButtonActive]}
+          onPress={() => onLocaleChange('ru')}
+        >
+          <ThemedText style={[styles.langButtonText, locale === 'ru' && styles.langButtonTextActive]}>RU</ThemedText>
+        </Pressable>
+        <Pressable
+          style={[styles.langButton, locale === 'mn' && styles.langButtonActive]}
+          onPress={() => onLocaleChange('mn')}
+        >
+          <ThemedText style={[styles.langButtonText, locale === 'mn' && styles.langButtonTextActive]}>MN</ThemedText>
+        </Pressable>
+      </View>
+      <ThemedText type="title" style={styles.greeting}>
+        {t('test_greeting')}
+      </ThemedText>
+      <ThemedText style={styles.subtitle}>
+        {t('test_welcome')}
+      </ThemedText>
+      <ThemedText style={styles.apiHint}>
+        API: {API_BASE}
+      </ThemedText>
+      <Pressable
+        style={({ pressed }) => [
+          styles.button,
+          { backgroundColor: tintColor },
+          pressed && styles.buttonPressed,
+          loading && styles.buttonDisabled,
+        ]}
+        onPress={onFill}
+        disabled={loading}
+      >
+        {loadingFill ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <ThemedText style={styles.buttonText}>
+            {t('test_fill_data')}
+          </ThemedText>
+        )}
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [
+          styles.button,
+          { backgroundColor: errorColor },
+          pressed && styles.buttonPressed,
+          loading && styles.buttonDisabled,
+        ]}
+        onPress={onClear}
+        disabled={loading}
+      >
+        {loadingClear ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <ThemedText style={styles.buttonText}>
+            {t('test_clear_data')}
+          </ThemedText>
+        )}
+      </Pressable>
+    </ThemedView>
+  );
+}
+
+const SECTION_KEYS: SectionKey[] = ['customer', 'courier'];
+
+export default function TestScreen() {
+  const { t, locale, setLocale } = useLanguage();
+  const borderColor = useThemeColor({}, 'border');
+  const [sections, setSections] = useState<UserSection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [loadingFill, setLoadingFill] = useState(false);
   const [loadingClear, setLoadingClear] = useState(false);
-  const loading = loadingFill || loadingClear;
+  const [expandedSections, setExpandedSections] = useState<Record<SectionKey, boolean>>(() =>
+    Object.fromEntries(SECTION_KEYS.map((k) => [k, false])) as Record<SectionKey, boolean>
+  );
+
+  const toggleSection = useCallback((key: SectionKey) => {
+    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  const load = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+    try {
+      const [customers, couriers] = await Promise.all([
+        fetchJson<UserItem[]>(CUSTOMERS_URL),
+        fetchJson<UserItem[]>(COURIERS_URL),
+      ]);
+      const customerData = customers.map((c) => ({ ...c, _sectionKey: 'customer' }));
+      const courierData = couriers.map((c) => ({ ...c, _sectionKey: 'courier' }));
+      setSections([
+        { sectionKey: 'customer', title: '', data: customerData },
+        { sectionKey: 'courier', title: '', data: courierData },
+      ]);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.name === 'AbortError'
+            ? t('test_error_timeout')
+            : err.message
+          : t('test_error_load_users');
+      setError(message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleFillTestData = async () => {
     setLoadingFill(true);
@@ -47,17 +272,18 @@ export default function HomeScreen() {
         couriers: number;
       };
       Alert.alert(
-        'Готово',
-        `Тестовые данные добавлены.\nКлиентов: ${data.customers}, курьеров: ${data.couriers}.`
+        t('common_done'),
+        t('test_done_fill', { customers: data.customers, couriers: data.couriers })
       );
+      load();
     } catch (err) {
       const message =
         err instanceof Error
           ? err.name === 'AbortError'
-            ? 'Превышено время ожидания. Проверьте, что сервер запущен и доступен.'
+            ? t('test_error_fill')
             : err.message
-          : 'Не удалось заполнить тестовые данные.';
-      Alert.alert('Ошибка', message);
+          : t('test_error_fill');
+      Alert.alert(t('common_error'), message);
     } finally {
       setLoadingFill(false);
     }
@@ -74,70 +300,89 @@ export default function HomeScreen() {
         couriers: number;
       };
       Alert.alert(
-        'Готово',
-        `Все данные удалены.\nОтзывов: ${data.reviews}, заказов: ${data.orders}, заказчиков: ${data.customers}, курьеров: ${data.couriers}.`
+        t('common_done'),
+        t('test_done_clear', {
+          reviews: data.reviews,
+          orders: data.orders,
+          customers: data.customers,
+          couriers: data.couriers,
+        })
       );
+      load();
     } catch (err) {
       const message =
         err instanceof Error
           ? err.name === 'AbortError'
-            ? 'Превышено время ожидания.'
+            ? t('test_error_timeout')
             : err.message
-          : 'Не удалось удалить данные.';
-      Alert.alert('Ошибка', message);
+          : t('test_error_clear');
+      Alert.alert(t('common_error'), message);
     } finally {
       setLoadingClear(false);
     }
   };
 
+  const listHeader = (
+    <MainHeader
+      loadingFill={loadingFill}
+      loadingClear={loadingClear}
+      onFill={handleFillTestData}
+      onClear={handleClearAllData}
+      t={t}
+      locale={locale}
+      onLocaleChange={setLocale}
+    />
+  );
+
+  const displaySections = sections.map((s) => ({
+    ...s,
+    title: s.sectionKey === 'customer' ? t('test_section_customers') : t('test_section_couriers'),
+    data: expandedSections[s.sectionKey] ? s.data : [],
+  }));
+  const totalItems = sections.reduce((sum, s) => sum + s.data.length, 0);
+
+  const listEmpty =
+    loading && sections.length === 0 ? (
+      <ThemedView style={styles.centered}>
+        <ActivityIndicator size="large" />
+        <ThemedText style={styles.loadingText}>{t('common_loading')}</ThemedText>
+      </ThemedView>
+    ) : error && sections.length === 0 ? (
+      <ThemedView style={styles.centered}>
+        <ThemedText style={styles.errorText}>{error}</ThemedText>
+      </ThemedView>
+    ) : (
+      <ThemedText style={styles.emptyText}>{t('test_no_users')}</ThemedText>
+    );
+
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.greeting}>
-        Привет!
-      </ThemedText>
-      <ThemedText style={styles.subtitle}>
-        Добро пожаловать в приложение.
-      </ThemedText>
-      <ThemedText style={styles.apiHint}>
-        API: {API_BASE}
-      </ThemedText>
-
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          pressed && styles.buttonPressed,
-          loading && styles.buttonDisabled,
-        ]}
-        onPress={handleFillTestData}
-        disabled={loading}
-      >
-        {loadingFill ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <ThemedText style={styles.buttonText}>
-            Заполнить тестовые данные
-          </ThemedText>
-        )}
-      </Pressable>
-
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          styles.buttonDanger,
-          pressed && styles.buttonPressed,
-          loading && styles.buttonDisabled,
-        ]}
-        onPress={handleClearAllData}
-        disabled={loading}
-      >
-        {loadingClear ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <ThemedText style={styles.buttonText}>
-            Удалить все данные
-          </ThemedText>
-        )}
-      </Pressable>
+      <SectionList
+        sections={displaySections}
+        keyExtractor={(item) => `${item._sectionKey}-${item.id}`}
+        renderItem={({ item }) => <UserItemRow item={item} t={t} />}
+        renderSectionHeader={({ section }) => {
+          const originalSection = sections.find((s) => s.sectionKey === section.sectionKey);
+          const count = originalSection?.data.length ?? 0;
+          return (
+            <CollapsibleSectionHeader
+              title={section.title}
+              count={count}
+              expanded={!!expandedSections[section.sectionKey]}
+              onToggle={() => toggleSection(section.sectionKey)}
+            />
+          );
+        }}
+        stickySectionHeadersEnabled={false}
+        ListHeaderComponent={listHeader}
+        contentContainerStyle={totalItems === 0 ? styles.emptyList : undefined}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} />
+        }
+        ListEmptyComponent={listEmpty}
+        ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: borderColor }]} />}
+        SectionSeparatorComponent={() => <View style={[styles.sectionSeparator, { backgroundColor: borderColor }]} />}
+      />
     </ThemedView>
   );
 }
@@ -145,9 +390,39 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  },
+  headerBlock: {
     padding: 24,
+    paddingBottom: 16,
+    alignItems: 'center',
+  },
+  langRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  langLabel: {
+    fontSize: 14,
+    opacity: 0.9,
+  },
+  langButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.2)',
+  },
+  langButtonActive: {
+    borderColor: '#0a7ea4',
+    backgroundColor: 'rgba(10, 126, 164, 0.15)',
+  },
+  langButtonText: {
+    fontSize: 14,
+  },
+  langButtonTextActive: {
+    fontWeight: '600',
   },
   greeting: {
     marginBottom: 8,
@@ -163,7 +438,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   button: {
-    backgroundColor: '#0a7ea4',
     marginBottom: 12,
     paddingHorizontal: 24,
     paddingVertical: 14,
@@ -174,9 +448,6 @@ const styles = StyleSheet.create({
   buttonPressed: {
     opacity: 0.85,
   },
-  buttonDanger: {
-    backgroundColor: '#c53030',
-  },
   buttonDisabled: {
     opacity: 0.7,
   },
@@ -184,5 +455,64 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 12,
+  },
+  errorText: {
+    textAlign: 'center',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  sectionHeaderPressed: {
+    opacity: 0.8,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    opacity: 0.9,
+  },
+  sectionChevron: {
+    fontSize: 12,
+    opacity: 0.8,
+  },
+  sectionSeparator: {
+    height: 16,
+  },
+  item: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  description: {
+    marginTop: 4,
+    opacity: 0.9,
+    fontSize: 14,
+  },
+  meta: {
+    marginTop: 4,
+    opacity: 0.7,
+    fontSize: 12,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 16,
+  },
+  emptyList: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  emptyText: {
+    textAlign: 'center',
   },
 });

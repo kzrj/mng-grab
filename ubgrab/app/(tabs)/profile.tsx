@@ -11,6 +11,7 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/auth';
+import { useLanguage } from '@/context/language';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
 import { API_V1 } from '@/constants/api';
@@ -27,6 +28,7 @@ type AccountInfo = {
 
 export default function ProfileScreen() {
   const { token, clearToken } = useAuth();
+  const { t } = useLanguage();
   const [account, setAccount] = useState<AccountInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -48,17 +50,17 @@ export default function ProfileScreen() {
           await clearToken();
           return;
         }
-        throw new Error('Не удалось загрузить профиль');
+        throw new Error(t('profile_error_load'));
       }
       const data: AccountInfo = await res.json();
       setAccount(data);
     } catch {
-      Alert.alert('Ошибка', 'Не удалось загрузить данные аккаунта');
+      Alert.alert(t('common_error'), t('profile_error_account'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [token, clearToken]);
+  }, [token, clearToken, t]);
 
   useEffect(() => {
     fetchProfile();
@@ -66,7 +68,7 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     await clearToken();
-    Alert.alert('Готово', 'Вы вышли из аккаунта.');
+    Alert.alert(t('common_done'), t('profile_logout_done'));
   };
 
   const formatDate = (s: string) => {
@@ -99,21 +101,21 @@ export default function ProfileScreen() {
       }
     >
       <ThemedText type="title" style={styles.title}>
-        Профиль
+        {t('profile_title')}
       </ThemedText>
       <ThemedText style={styles.subtitle}>
-        Информация об аккаунте
+        {t('profile_subtitle')}
       </ThemedText>
 
       {account && (
         <ThemedView style={[styles.card, { backgroundColor: inputBg }]}>
-          <ThemedText style={[styles.label, styles.labelFirst]}>Имя</ThemedText>
+          <ThemedText style={[styles.label, styles.labelFirst]}>{t('profile_name')}</ThemedText>
           <ThemedText style={[styles.value, { color: textColor }]}>{account.name}</ThemedText>
 
-          <ThemedText style={styles.label}>Телефон</ThemedText>
+          <ThemedText style={styles.label}>{t('profile_phone')}</ThemedText>
           <ThemedText style={[styles.value, { color: textColor }]}>{account.phone}</ThemedText>
 
-          <ThemedText style={styles.label}>Аккаунт создан</ThemedText>
+          <ThemedText style={styles.label}>{t('profile_created')}</ThemedText>
           <ThemedText style={[styles.value, { color: textColor }]}>
             {formatDate(account.created_at)}
           </ThemedText>
@@ -124,7 +126,7 @@ export default function ProfileScreen() {
         style={({ pressed }) => [styles.logoutButton, pressed && styles.buttonPressed]}
         onPress={handleLogout}
       >
-        <ThemedText style={styles.logoutButtonText}>Выйти из аккаунта</ThemedText>
+        <ThemedText style={styles.logoutButtonText}>{t('profile_logout')}</ThemedText>
       </Pressable>
     </ScrollView>
   );

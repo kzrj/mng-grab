@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { AuthProvider } from '@/context/auth';
+import { LanguageProvider } from '@/context/language';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
@@ -15,10 +16,12 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }} />
-        <StatusBar style="auto" />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+          <StatusBar style="auto" />
+        </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

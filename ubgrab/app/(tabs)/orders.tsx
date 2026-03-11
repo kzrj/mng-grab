@@ -8,6 +8,7 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useLanguage } from '@/context/language';
 
 import { API_V1 } from '@/constants/api';
 
@@ -67,6 +68,7 @@ function OrderItem({ item }: { item: Order }) {
 }
 
 export default function OrdersScreen() {
+  const { t } = useLanguage();
   const [list, setList] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -83,15 +85,15 @@ export default function OrdersScreen() {
       const message =
         err instanceof Error
           ? err.name === 'AbortError'
-            ? 'Превышено время ожидания'
+            ? t('test_error_timeout')
             : err.message
-          : 'Не удалось загрузить список';
+          : t('orders_error_load');
       setError(message);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     load();
@@ -101,7 +103,7 @@ export default function OrdersScreen() {
     return (
       <ThemedView style={styles.centered}>
         <ActivityIndicator size="large" />
-        <ThemedText style={styles.loadingText}>Загрузка…</ThemedText>
+        <ThemedText style={styles.loadingText}>{t('orders_loading')}</ThemedText>
       </ThemedView>
     );
   }
@@ -125,7 +127,7 @@ export default function OrdersScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} />
         }
         ListEmptyComponent={
-          <ThemedText style={styles.emptyText}>Нет заказов</ThemedText>
+          <ThemedText style={styles.emptyText}>{t('orders_no_orders')}</ThemedText>
         }
       />
     </ThemedView>

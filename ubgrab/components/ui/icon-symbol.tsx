@@ -14,6 +14,7 @@ const MAPPING = {
   'shippingbox.fill': 'local-shipping',
   'plus.circle.fill': 'add-circle',
   'person.crop.circle.fill': 'person',
+  'questionmark.circle.fill': 'help',
 } as IconMapping;
 
 /**

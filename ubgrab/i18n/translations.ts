@@ -1,0 +1,245 @@
+/**
+ * Простые плоские переводы: ключ → строка для ru и mn.
+ * Добавляй новые ключи в оба объекта.
+ */
+export type TranslationKey = keyof typeof ru;
+
+const ru = {
+  // Общие
+  common_loading: 'Загрузка…',
+  common_error: 'Ошибка',
+  common_done: 'Готово',
+  common_ok: 'OK',
+
+  // Тест (index)
+  test_greeting: 'Привет!',
+  test_welcome: 'Добро пожаловать в приложение.',
+  test_fill_data: 'Заполнить тестовые данные',
+  test_clear_data: 'Удалить все данные',
+  test_section_customers: 'Заказчики',
+  test_section_couriers: 'Курьеры',
+  test_id: 'ID',
+  test_account: 'Аккаунт',
+  test_no_users: 'Нет пользователей',
+  test_done_fill: 'Тестовые данные добавлены.\nКлиентов: {{customers}}, курьеров: {{couriers}}.',
+  test_done_clear:
+    'Все данные удалены.\nОтзывов: {{reviews}}, заказов: {{orders}}, заказчиков: {{customers}}, курьеров: {{couriers}}.',
+  test_error_timeout: 'Превышено время ожидания',
+  test_error_load_users: 'Не удалось загрузить список пользователей',
+  test_error_fill: 'Не удалось заполнить тестовые данные. Проверьте, что сервер запущен и доступен.',
+  test_error_clear: 'Не удалось удалить данные.',
+  test_lang: 'Язык',
+  test_lang_ru: 'Русский',
+  test_lang_mn: 'Монгольский',
+
+  // Табы
+  tab_header: 'Монгольский доставщик',
+  tab_delivery: 'Доставка',
+  tab_test: 'Тест',
+  tab_orders: 'Заказы',
+  tab_create_order: 'Создать заказ',
+  tab_login: 'Вход',
+  tab_profile: 'Профиль',
+
+  // Заказы
+  orders_loading: 'Загрузка…',
+  orders_error_load: 'Не удалось загрузить список',
+  orders_no_orders: 'Нет заказов',
+
+  // Создать заказ
+  create_title: 'Новый заказ',
+  create_order_title: 'Создание заказа',
+  create_login_required: 'Войдите в аккаунт, чтобы создавать заказы.',
+  create_from: 'Адрес отправления *',
+  create_to: 'Адрес назначения *',
+  create_from_placeholder: 'Откуда везти',
+  create_to_placeholder: 'Куда везти',
+  create_price: 'Цена (₽)',
+  create_price_placeholder: 'Необязательно',
+  create_date: 'Дата заказа *',
+  create_date_choose: 'Выбрать дату',
+  create_courier: 'Курьер (необязательно)',
+  create_courier_choose: 'Выбрать курьера',
+  create_submit: 'Создать заказ',
+  create_modal_courier: 'Курьер',
+  create_modal_no_courier: 'Не назначать',
+  create_modal_no_couriers: 'Нет курьеров',
+  create_done: 'Заказ создан',
+  create_error_from: 'Укажите адрес отправления',
+  create_error_to: 'Укажите адрес назначения',
+  create_error_price: 'Укажите корректную цену (число ≥ 0)',
+  create_error_date: 'Выберите дату заказа',
+  create_error_auth: 'Войдите в аккаунт',
+  create_error_timeout: 'Превышено время ожидания',
+  create_error_fail: 'Не удалось создать заказ',
+
+  // Профиль
+  profile_title: 'Профиль',
+  profile_subtitle: 'Информация об аккаунте',
+  profile_name: 'Имя',
+  profile_phone: 'Телефон',
+  profile_created: 'Аккаунт создан',
+  profile_logout: 'Выйти из аккаунта',
+  profile_logout_done: 'Вы вышли из аккаунта.',
+  profile_error_load: 'Не удалось загрузить профиль',
+  profile_error_account: 'Не удалось загрузить данные аккаунта',
+
+  // Вход
+  login_title: 'Вход',
+  login_subtitle: 'Телефон и пароль от аккаунта',
+  login_phone_placeholder: 'Телефон',
+  login_password_placeholder: 'Пароль',
+  login_submit: 'Войти',
+  login_register: 'Зарегистрироваться',
+  login_logout: 'Выйти из аккаунта',
+  login_done: 'Вы вошли в аккаунт.',
+  login_logout_done: 'Вы вышли из аккаунта.',
+  login_error_phone: 'Введите телефон',
+  login_error_password: 'Введите пароль',
+  login_error_title: 'Ошибка входа',
+  login_error_timeout: 'Превышено время ожидания. Проверьте сервер и сеть.',
+  login_error_fail: 'Не удалось войти.',
+
+  // Регистрация
+  register_title: 'Регистрация',
+  register_subtitle: 'Заполните данные для создания аккаунта',
+  register_name_placeholder: 'Имя',
+  register_phone_placeholder: 'Телефон',
+  register_password_placeholder: 'Пароль',
+  register_role: 'Роль',
+  register_role_customer: 'Заказчик',
+  register_role_courier: 'Курьер',
+  register_submit: 'Зарегистрироваться',
+  register_done: 'Вы успешно зарегистрированы.',
+  register_error_name: 'Введите имя',
+  register_error_phone: 'Введите телефон',
+  register_error_password: 'Введите пароль',
+  register_error_title: 'Ошибка регистрации',
+  register_error_timeout: 'Превышено время ожидания. Проверьте сервер и сеть.',
+  register_error_fail: 'Не удалось зарегистрироваться.',
+} as const;
+
+const mn: Record<TranslationKey, string> = {
+  common_loading: 'Уншиж байна…',
+  common_error: 'Алдаа',
+  common_done: 'Болсон',
+  common_ok: 'Тийм',
+
+  test_greeting: 'Сайн байна уу!',
+  test_welcome: 'Аппликейшнд тавтай морил.',
+  test_fill_data: 'Туршилтын өгөгдөл оруулах',
+  test_clear_data: 'Бүх өгөгдлийг устгах',
+  test_section_customers: 'Захиалагчид',
+  test_section_couriers: 'Курьерүүд',
+  test_id: 'ID',
+  test_account: 'Данс',
+  test_no_users: 'Хэрэглэгч байхгүй',
+  test_done_fill:
+    'Туршилтын өгөгдөл нэмэгдлээ.\nЗахиалагч: {{customers}}, курьер: {{couriers}}.',
+  test_done_clear:
+    'Бүх өгөгдөл устгагдлаа.\nСэтгэгдэл: {{reviews}}, захиалга: {{orders}}, захиалагч: {{customers}}, курьер: {{couriers}}.',
+  test_error_timeout: 'Хүлээх хугацаа хэтэрлээ',
+  test_error_load_users: 'Хэрэглэгчийн жагсаалт ачааллахад амжилтгүй',
+  test_error_fill:
+    'Туршилтын өгөгдөл оруулахад амжилтгүй. Сервер ажиллаж байгаа эсэхийг шалгана уу.',
+  test_error_clear: 'Өгөгдлийг устгахад амжилтгүй.',
+  test_lang: 'Хэл',
+  test_lang_ru: 'Орос',
+  test_lang_mn: 'Монгол',
+
+  tab_header: 'Монгол хүргэлт',
+  tab_delivery: 'Хүргэлт',
+  tab_test: 'Туршилт',
+  tab_orders: 'Захиалгууд',
+  tab_create_order: 'Захиалга үүсгэх',
+  tab_login: 'Нэвтрэх',
+  tab_profile: 'Профайл',
+
+  orders_loading: 'Уншиж байна…',
+  orders_error_load: 'Жагсаалт ачааллахад амжилтгүй',
+  orders_no_orders: 'Захиалга байхгүй',
+
+  create_title: 'Шинэ захиалга',
+  create_order_title: 'Захиалга үүсгэх',
+  create_login_required: 'Захиалга үүсгэхийн тулд нэвтэрнэ үү.',
+  create_from: 'Илгээх хаяг *',
+  create_to: 'Хүргэх хаяг *',
+  create_from_placeholder: 'Хаанаас авах',
+  create_to_placeholder: 'Хаашаа хүргэх',
+  create_price: 'Үнэ (₽)',
+  create_price_placeholder: 'Заавал биш',
+  create_date: 'Захиалгийн огноо *',
+  create_date_choose: 'Огноо сонгох',
+  create_courier: 'Курьер (заавал биш)',
+  create_courier_choose: 'Курьер сонгох',
+  create_submit: 'Захиалга үүсгэх',
+  create_modal_courier: 'Курьер',
+  create_modal_no_courier: 'Томилохгүй',
+  create_modal_no_couriers: 'Курьер байхгүй',
+  create_done: 'Захиалга үүслээ',
+  create_error_from: 'Илгээх хаягаа оруулна уу',
+  create_error_to: 'Хүргэх хаягаа оруулна уу',
+  create_error_price: 'Зөв үнэ оруулна уу (тоо ≥ 0)',
+  create_error_date: 'Захиалгийн огноо сонгоно уу',
+  create_error_auth: 'Нэвтэрнэ үү',
+  create_error_timeout: 'Хүлээх хугацаа хэтэрлээ',
+  create_error_fail: 'Захиалга үүсгэхэд амжилтгүй',
+
+  profile_title: 'Профайл',
+  profile_subtitle: 'Дансны мэдээлэл',
+  profile_name: 'Нэр',
+  profile_phone: 'Утас',
+  profile_created: 'Данс үүсгэсэн',
+  profile_logout: 'Гарах',
+  profile_logout_done: 'Та системээс гарлаа.',
+  profile_error_load: 'Профайл ачааллахад амжилтгүй',
+  profile_error_account: 'Дансны өгөгдөл ачааллахад амжилтгүй',
+
+  login_title: 'Нэвтрэх',
+  login_subtitle: 'Утас болон нууц үг',
+  login_phone_placeholder: 'Утас',
+  login_password_placeholder: 'Нууц үг',
+  login_submit: 'Нэвтрэх',
+  login_register: 'Бүртгүүлэх',
+  login_logout: 'Гарах',
+  login_done: 'Та нэвтэрлээ.',
+  login_logout_done: 'Та гарлаа.',
+  login_error_phone: 'Утасаа оруулна уу',
+  login_error_password: 'Нууц үгээ оруулна уу',
+  login_error_title: 'Нэвтрэх алдаа',
+  login_error_timeout: 'Хүлээх хугацаа хэтэрлээ. Сервер болон сүлжээг шалгана уу.',
+  login_error_fail: 'Нэвтрэхэд амжилтгүй.',
+
+  register_title: 'Бүртгүүлэх',
+  register_subtitle: 'Данс үүсгэхийн тулд мэдээллээ оруулна уу',
+  register_name_placeholder: 'Нэр',
+  register_phone_placeholder: 'Утас',
+  register_password_placeholder: 'Нууц үг',
+  register_role: 'Эрх',
+  register_role_customer: 'Захиалагч',
+  register_role_courier: 'Курьер',
+  register_submit: 'Бүртгүүлэх',
+  register_done: 'Та амжилттай бүртгүүллээ.',
+  register_error_name: 'Нэрээ оруулна уу',
+  register_error_phone: 'Утасаа оруулна уу',
+  register_error_password: 'Нууц үгээ оруулна уу',
+  register_error_title: 'Бүртгэлийн алдаа',
+  register_error_timeout: 'Хүлээх хугацаа хэтэрлээ. Сервер болон сүлжээг шалгана уу.',
+  register_error_fail: 'Бүртгүүлэхэд амжилтгүй.',
+};
+
+export const translations = { ru, mn };
+
+export function translate(
+  locale: 'ru' | 'mn',
+  key: TranslationKey,
+  params?: Record<string, string | number>
+): string {
+  let text = locale === 'mn' ? mn[key] : ru[key];
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      text = text.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+    }
+  }
+  return text;
+}

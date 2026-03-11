@@ -1,24 +1,39 @@
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
+/**
+ * Цветовая схема «Степь» для Монгольского доставщика:
+ * - небо (синий), степь (тёплые нейтрали), традиционный акцент (терракотовый).
+ */
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#1C1912',
+    textSecondary: '#5C5346',
+    background: '#F8F6F1',
+    surface: '#FFFFFF',
+    tint: '#1E5F74',
+    accent: '#B54A2E',
+    icon: '#5C5346',
+    tabIconDefault: '#8B8378',
+    tabIconSelected: '#1E5F74',
+    border: '#E8E4DC',
+    success: '#2D6A4F',
+    warning: '#B8860B',
+    error: '#B54A2E',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#F5F2EB',
+    textSecondary: '#A39E92',
+    background: '#0F1419',
+    surface: '#1A2129',
+    tint: '#5BA3B8',
+    accent: '#D96A4A',
+    icon: '#A39E92',
+    tabIconDefault: '#6B6560',
+    tabIconSelected: '#5BA3B8',
+    border: '#2A333D',
+    success: '#40916C',
+    warning: '#E0B000',
+    error: '#D96A4A',
   },
 };
 

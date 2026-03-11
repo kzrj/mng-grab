@@ -16,6 +16,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/auth';
+import { useLanguage } from '@/context/language';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { API_V1 } from '@/constants/api';
 
 function formatDateForApi(d: Date): string {
@@ -84,6 +86,8 @@ async function createOrder(
 
 export default function CreateOrderScreen() {
   const { token, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
+  const tintColor = useThemeColor({}, 'tint');
   const [whereFrom, setWhereFrom] = useState('');
   const [whereTo, setWhereTo] = useState('');
   const [price, setPrice] = useState('');
@@ -121,23 +125,23 @@ export default function CreateOrderScreen() {
     const priceNum = priceTrimmed === '' ? 0 : parseFloat(priceTrimmed);
 
     if (!from) {
-      Alert.alert('Ошибка', 'Укажите адрес отправления');
+      Alert.alert(t('common_error'), t('create_error_from'));
       return;
     }
     if (!to) {
-      Alert.alert('Ошибка', 'Укажите адрес назначения');
+      Alert.alert(t('common_error'), t('create_error_to'));
       return;
     }
     if (priceTrimmed !== '' && (Number.isNaN(priceNum) || priceNum < 0)) {
-      Alert.alert('Ошибка', 'Укажите корректную цену (число ≥ 0)');
+      Alert.alert(t('common_error'), t('create_error_price'));
       return;
     }
     if (!dateWhen) {
-      Alert.alert('Ошибка', 'Выберите дату заказа');
+      Alert.alert(t('common_error'), t('create_error_date'));
       return;
     }
     if (!token) {
-      Alert.alert('Ошибка', 'Войдите в аккаунт');
+      Alert.alert(t('common_error'), t('create_error_auth'));
       return;
     }
 
@@ -151,7 +155,7 @@ export default function CreateOrderScreen() {
         status: 'new',
         courier_id: courierId ?? undefined,
       });
-      Alert.alert('Готово', 'Заказ создан');
+      Alert.alert(t('common_done'), t('create_done'));
       setWhereFrom('');
       setWhereTo('');
       setPrice('');
@@ -161,10 +165,10 @@ export default function CreateOrderScreen() {
       const message =
         err instanceof Error
           ? err.name === 'AbortError'
-            ? 'Превышено время ожидания'
+            ? t('create_error_timeout')
             : err.message
-          : 'Не удалось создать заказ';
-      Alert.alert('Ошибка', message);
+          : t('create_error_fail');
+      Alert.alert(t('common_error'), message);
     } finally {
       setLoadingSubmit(false);
     }
@@ -174,10 +178,10 @@ export default function CreateOrderScreen() {
     return (
       <ThemedView style={styles.centered}>
         <ThemedText type="subtitle" style={styles.title}>
-          Создание заказа
+          {t('create_order_title')}
         </ThemedText>
         <ThemedText style={styles.loadingText}>
-          Войдите в аккаунт, чтобы создавать заказы.
+          {t('create_login_required')}
         </ThemedText>
       </ThemedView>
     );
@@ -187,7 +191,7 @@ export default function CreateOrderScreen() {
     return (
       <ThemedView style={styles.centered}>
         <ActivityIndicator size="large" />
-        <ThemedText style={styles.loadingText}>Загрузка…</ThemedText>
+        <ThemedText style={styles.loadingText}>{t('common_loading')}</ThemedText>
       </ThemedView>
     );
   }
@@ -204,46 +208,46 @@ export default function CreateOrderScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <ThemedText type="subtitle" style={styles.title}>
-          Новый заказ
+          {t('create_title')}
         </ThemedText>
 
-        <ThemedText style={styles.label}>Адрес отправления *</ThemedText>
+        <ThemedText style={styles.label}>{t('create_from')}</ThemedText>
         <TextInput
           style={styles.input}
           value={whereFrom}
           onChangeText={setWhereFrom}
-          placeholder="Откуда везти"
+          placeholder={t('create_from_placeholder')}
           placeholderTextColor="#687076"
           maxLength={255}
         />
 
-        <ThemedText style={styles.label}>Адрес назначения *</ThemedText>
+        <ThemedText style={styles.label}>{t('create_to')}</ThemedText>
         <TextInput
           style={styles.input}
           value={whereTo}
           onChangeText={setWhereTo}
-          placeholder="Куда везти"
+          placeholder={t('create_to_placeholder')}
           placeholderTextColor="#687076"
           maxLength={255}
         />
 
-        <ThemedText style={styles.label}>Цена (₽)</ThemedText>
+        <ThemedText style={styles.label}>{t('create_price')}</ThemedText>
         <TextInput
           style={styles.input}
           value={price}
           onChangeText={setPrice}
-          placeholder="Необязательно"
+          placeholder={t('create_price_placeholder')}
           placeholderTextColor="#687076"
           keyboardType="decimal-pad"
         />
 
-        <ThemedText style={styles.label}>Дата заказа *</ThemedText>
+        <ThemedText style={styles.label}>{t('create_date')}</ThemedText>
         <Pressable
           style={styles.selectButton}
           onPress={() => setShowDatePicker(true)}
         >
           <ThemedText>
-            {dateWhen ? formatDateDisplay(dateWhen) : 'Выбрать дату'}
+            {dateWhen ? formatDateDisplay(dateWhen) : t('create_date_choose')}
           </ThemedText>
         </Pressable>
         {showDatePicker && (
@@ -263,11 +267,11 @@ export default function CreateOrderScreen() {
             style={styles.datePickerDone}
             onPress={() => setShowDatePicker(false)}
           >
-            <ThemedText style={styles.datePickerDoneText}>Готово</ThemedText>
+            <ThemedText style={[styles.datePickerDoneText, { color: tintColor }]}>Готово</ThemedText>
           </Pressable>
         )}
 
-        <ThemedText style={styles.label}>Курьер (необязательно)</ThemedText>
+        <ThemedText style={styles.label}>{t('create_courier')}</ThemedText>
         <Pressable
           style={styles.selectButton}
           onPress={() => setCourierModalVisible(true)}
@@ -275,19 +279,19 @@ export default function CreateOrderScreen() {
           <ThemedText>
             {selectedCourier
               ? `${selectedCourier.phone}${selectedCourier.description ? ` — ${selectedCourier.description}` : ''}`
-              : 'Выбрать курьера'}
+              : t('create_courier_choose')}
           </ThemedText>
         </Pressable>
 
         <Pressable
-          style={[styles.submitButton, loadingSubmit && styles.submitDisabled]}
+          style={[styles.submitButton, { backgroundColor: tintColor }, loadingSubmit && styles.submitDisabled]}
           onPress={handleSubmit}
           disabled={loadingSubmit}
         >
           {loadingSubmit ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <ThemedText style={styles.submitText}>Создать заказ</ThemedText>
+            <ThemedText style={styles.submitText}>{t('create_submit')}</ThemedText>
           )}
         </Pressable>
       </ScrollView>
@@ -304,7 +308,7 @@ export default function CreateOrderScreen() {
         >
           <ThemedView style={styles.modalContent} onStartShouldSetResponder={() => true}>
             <ThemedText type="subtitle" style={styles.modalTitle}>
-              Курьер
+              {t('create_modal_courier')}
             </ThemedText>
             <FlatList
               data={couriers}
@@ -317,7 +321,7 @@ export default function CreateOrderScreen() {
                     setCourierModalVisible(false);
                   }}
                 >
-                  <ThemedText>Не назначать</ThemedText>
+                  <ThemedText>{t('create_modal_no_courier')}</ThemedText>
                 </Pressable>
               }
               renderItem={({ item }) => (
@@ -335,7 +339,7 @@ export default function CreateOrderScreen() {
                 </Pressable>
               )}
               ListEmptyComponent={
-                <ThemedText style={styles.emptyModal}>Нет курьеров</ThemedText>
+                <ThemedText style={styles.emptyModal}>{t('create_modal_no_couriers')}</ThemedText>
               }
             />
           </ThemedView>
@@ -376,7 +380,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   submitButton: {
-    backgroundColor: '#0a7ea4',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -409,5 +412,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
   },
-  datePickerDoneText: { fontSize: 16, fontWeight: '600', color: '#0a7ea4' },
+  datePickerDoneText: { fontSize: 16, fontWeight: '600' },
 });

@@ -11,15 +11,14 @@ import {
 import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
-import { useThemeColor } from '@/hooks/use-theme-color';
 import { useAuth } from '@/context/auth';
+import { useLanguage } from '@/context/language';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 import { API_V1 } from '@/constants/api';
 
 const LOGIN_URL = `${API_V1}/auth/login`;
 const FETCH_TIMEOUT_MS = 15000;
-
-export { getStoredToken } from '@/lib/auth-storage';
 
 async function loginApi(phone: string, password: string): Promise<{ access_token: string }> {
   const controller = new AbortController();
@@ -33,7 +32,7 @@ async function loginApi(phone: string, password: string): Promise<{ access_token
     });
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      const message = typeof data.detail === 'string' ? data.detail : 'Ошибка входа';
+      const message = typeof data.detail === 'string' ? data.detail : undefined;
       throw new Error(message);
     }
     return response.json();
@@ -47,37 +46,39 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { setToken, clearToken, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
+  const tintColor = useThemeColor({}, 'tint');
   const inputBg = useThemeColor({ light: '#f0f0f0', dark: '#2a2a2a' }, 'background');
 
   const handleLogin = async () => {
     const trimmedPhone = phone.trim();
     if (!trimmedPhone) {
-      Alert.alert('Ошибка', 'Введите телефон');
+      Alert.alert(t('common_error'), t('login_error_phone'));
       return;
     }
     if (!password) {
-      Alert.alert('Ошибка', 'Введите пароль');
+      Alert.alert(t('common_error'), t('login_error_password'));
       return;
     }
     setLoading(true);
     try {
       const data = await loginApi(trimmedPhone, password);
       await setToken(data.access_token);
-      Alert.alert('Готово', 'Вы вошли в аккаунт.');
+      Alert.alert(t('common_done'), t('login_done'));
       setPhone('');
       setPassword('');
     } catch (err) {
       const message =
         err instanceof Error
           ? err.name === 'AbortError'
-            ? 'Превышено время ожидания. Проверьте сервер и сеть.'
+            ? t('login_error_timeout')
             : err.message
-          : 'Не удалось войти.';
-      Alert.alert('Ошибка входа', message);
+          : t('login_error_fail');
+      Alert.alert(t('login_error_title'), message);
     } finally {
       setLoading(false);
     }
@@ -85,11 +86,11 @@ export default function LoginScreen() {
 
   const handleLogout = async () => {
     await clearToken();
-    Alert.alert('Готово', 'Вы вышли из аккаунта.');
+    Alert.alert(t('common_done'), t('login_logout_done'));
   };
 
   const handleRegister = () => {
-    router.push('/(tabs)/register');
+    router.push('/(tabs)/login/register');
   };
 
   return (
@@ -98,15 +99,15 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ThemedText type="title" style={styles.title}>
-        Вход
+        {t('login_title')}
       </ThemedText>
       <ThemedText style={styles.subtitle}>
-        Телефон и пароль от аккаунта
+        {t('login_subtitle')}
       </ThemedText>
 
       <TextInput
         style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
-        placeholder="Телефон"
+        placeholder={t('login_phone_placeholder')}
         placeholderTextColor="#888"
         value={phone}
         onChangeText={setPhone}
@@ -116,7 +117,7 @@ export default function LoginScreen() {
       />
       <TextInput
         style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
-        placeholder="Пароль"
+        placeholder={t('login_password_placeholder')}
         placeholderTextColor="#888"
         value={password}
         onChangeText={setPassword}
@@ -127,6 +128,7 @@ export default function LoginScreen() {
       <Pressable
         style={({ pressed }) => [
           styles.button,
+          { backgroundColor: tintColor },
           pressed && styles.buttonPressed,
           loading && styles.buttonDisabled,
         ]}
@@ -136,7 +138,7 @@ export default function LoginScreen() {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <ThemedText style={styles.buttonText}>Войти</ThemedText>
+          <ThemedText style={styles.buttonText}>{t('login_submit')}</ThemedText>
         )}
       </Pressable>
 
@@ -146,7 +148,7 @@ export default function LoginScreen() {
           onPress={handleLogout}
           disabled={loading}
         >
-          <ThemedText style={styles.logoutButtonText}>Выйти из аккаунта</ThemedText>
+          <ThemedText style={styles.logoutButtonText}>{t('login_logout')}</ThemedText>
         </Pressable>
       ) : (
         <Pressable
@@ -154,7 +156,7 @@ export default function LoginScreen() {
           onPress={handleRegister}
           disabled={loading}
         >
-          <ThemedText style={styles.logoutButtonText}>Зарегистрироваться</ThemedText>
+          <ThemedText style={styles.logoutButtonText}>{t('login_register')}</ThemedText>
         </Pressable>
       )}
     </KeyboardAvoidingView>
@@ -182,7 +184,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   button: {
-    backgroundColor: '#0a7ea4',
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 12,

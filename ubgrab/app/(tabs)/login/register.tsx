@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/context/auth';
+import { useLanguage } from '@/context/language';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
 import { API_V1 } from '@/constants/api';
@@ -55,25 +56,27 @@ export default function RegisterScreen() {
   const [role, setRole] = useState<Role>('customer');
   const [loading, setLoading] = useState(false);
   const { setToken } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
+  const tintColor = useThemeColor({}, 'tint');
   const inputBg = useThemeColor({ light: '#f0f0f0', dark: '#2a2a2a' }, 'background');
 
   const handleSubmit = async () => {
     const trimmedName = name.trim();
     const trimmedPhone = phone.trim();
     if (!trimmedName) {
-      Alert.alert('Ошибка', 'Введите имя');
+      Alert.alert(t('common_error'), t('register_error_name'));
       return;
     }
     if (!trimmedPhone) {
-      Alert.alert('Ошибка', 'Введите телефон');
+      Alert.alert(t('common_error'), t('register_error_phone'));
       return;
     }
     if (!password) {
-      Alert.alert('Ошибка', 'Введите пароль');
+      Alert.alert(t('common_error'), t('register_error_password'));
       return;
     }
 
@@ -81,9 +84,9 @@ export default function RegisterScreen() {
     try {
       const data = await registerApi(trimmedName, trimmedPhone, password, role);
       await setToken(data.access_token);
-      Alert.alert('Готово', 'Вы успешно зарегистрированы.', [
+      Alert.alert(t('common_done'), t('register_done'), [
         {
-          text: 'OK',
+          text: t('common_ok'),
           onPress: () => router.replace('/(tabs)/profile'),
         },
       ]);
@@ -91,10 +94,10 @@ export default function RegisterScreen() {
       const message =
         err instanceof Error
           ? err.name === 'AbortError'
-            ? 'Превышено время ожидания. Проверьте сервер и сеть.'
+            ? t('register_error_timeout')
             : err.message
-          : 'Не удалось зарегистрироваться.';
-      Alert.alert('Ошибка регистрации', message);
+          : t('register_error_fail');
+      Alert.alert(t('register_error_title'), message);
     } finally {
       setLoading(false);
     }
@@ -106,13 +109,13 @@ export default function RegisterScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ThemedText type="title" style={styles.title}>
-        Регистрация
+        {t('register_title')}
       </ThemedText>
-      <ThemedText style={styles.subtitle}>Заполните данные для создания аккаунта</ThemedText>
+      <ThemedText style={styles.subtitle}>{t('register_subtitle')}</ThemedText>
 
       <TextInput
         style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
-        placeholder="Имя"
+        placeholder={t('register_name_placeholder')}
         placeholderTextColor="#888"
         value={name}
         onChangeText={setName}
@@ -122,7 +125,7 @@ export default function RegisterScreen() {
 
       <TextInput
         style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
-        placeholder="Телефон"
+        placeholder={t('register_phone_placeholder')}
         placeholderTextColor="#888"
         value={phone}
         onChangeText={setPhone}
@@ -132,7 +135,7 @@ export default function RegisterScreen() {
       />
       <TextInput
         style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
-        placeholder="Пароль"
+        placeholder={t('register_password_placeholder')}
         placeholderTextColor="#888"
         value={password}
         onChangeText={setPassword}
@@ -140,12 +143,12 @@ export default function RegisterScreen() {
         editable={!loading}
       />
 
-      <ThemedText style={styles.roleLabel}>Роль</ThemedText>
+      <ThemedText style={styles.roleLabel}>{t('register_role')}</ThemedText>
       <View style={styles.roleRow}>
         <Pressable
           style={({ pressed }) => [
             styles.roleButton,
-            role === 'customer' && styles.roleButtonActive,
+            role === 'customer' && { borderColor: tintColor, backgroundColor: tintColor + '22' },
             pressed && styles.roleButtonPressed,
           ]}
           onPress={() => setRole('customer')}
@@ -157,13 +160,13 @@ export default function RegisterScreen() {
               role === 'customer' && styles.roleButtonTextActive,
             ]}
           >
-            Заказчик
+            {t('register_role_customer')}
           </ThemedText>
         </Pressable>
         <Pressable
           style={({ pressed }) => [
             styles.roleButton,
-            role === 'courier' && styles.roleButtonActive,
+            role === 'courier' && { borderColor: tintColor, backgroundColor: tintColor + '22' },
             pressed && styles.roleButtonPressed,
           ]}
           onPress={() => setRole('courier')}
@@ -175,7 +178,7 @@ export default function RegisterScreen() {
               role === 'courier' && styles.roleButtonTextActive,
             ]}
           >
-            Курьер
+            {t('register_role_courier')}
           </ThemedText>
         </Pressable>
       </View>
@@ -183,6 +186,7 @@ export default function RegisterScreen() {
       <Pressable
         style={({ pressed }) => [
           styles.submitButton,
+          { backgroundColor: tintColor },
           pressed && styles.buttonPressed,
           loading && styles.buttonDisabled,
         ]}
@@ -193,7 +197,7 @@ export default function RegisterScreen() {
           <ActivityIndicator color="#fff" />
         ) : (
           <ThemedText style={styles.submitButtonText}>
-            Зарегистрироваться
+            {t('register_submit')}
           </ThemedText>
         )}
       </Pressable>
@@ -238,10 +242,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#999',
   },
-  roleButtonActive: {
-    borderColor: '#0a7ea4',
-    backgroundColor: '#0a7ea422',
-  },
   roleButtonPressed: {
     opacity: 0.85,
   },
@@ -252,7 +252,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   submitButton: {
-    backgroundColor: '#0a7ea4',
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 12,
@@ -270,4 +269,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-})
+});
