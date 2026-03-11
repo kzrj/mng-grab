@@ -12,7 +12,7 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('ru');
+  const [locale, setLocaleState] = useState<Locale>('mn');
 
   useEffect(() => {
     let cancelled = false;

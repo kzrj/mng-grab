@@ -7,7 +7,7 @@ export type Locale = 'ru' | 'mn';
 export async function getStoredLocale(): Promise<Locale> {
   const value = await AsyncStorage.getItem(LANG_KEY);
   if (value === 'ru' || value === 'mn') return value;
-  return 'ru';
+  return 'mn';
 }
 
 export async function setStoredLocale(locale: Locale): Promise<void> {
