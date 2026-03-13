@@ -28,6 +28,9 @@ class CourierService:
     async def get_by_id(self, id: int) -> Courier | None:
         return await self._repo.get_by_id(id)
 
+    async def get_by_account_id(self, account_id: int) -> Courier | None:
+        return await self._repo.get_by_account_id(account_id)
+
     async def get_all(self, *, skip: int = 0, limit: int = 100) -> list[Courier]:
         return await self._repo.get_all(skip=skip, limit=limit)
 

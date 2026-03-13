@@ -1,3 +1,5 @@
+from typing import Literal
+
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -25,5 +27,6 @@ class AccountRead(BaseModel):
     id: int
     name: str
     phone: str
+    role: Literal["customer", "courier"] | None = None
     created_at: datetime
     updated_at: datetime

@@ -14,62 +14,24 @@ import { ThemedView } from '@/components/themed-view';
 import { useLanguage } from '@/context/language';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
-import { API_BASE, API_V1 } from '@/constants/api';
+import {
+  API_BASE,
+  getCustomers,
+  getCouriers,
+  fillSeed,
+  clearSeed,
+  type UserItem,
+} from '@/lib/api/seed';
 
-const CUSTOMERS_URL = `${API_V1}/customers`;
-const COURIERS_URL = `${API_V1}/couriers`;
-const SEED_FILL_URL = `${API_V1}/seed/fill`;
-const SEED_CLEAR_URL = `${API_V1}/seed/clear`;
-const FETCH_TIMEOUT_MS = 10000;
-
-type UserItem = {
-  id: number;
-  phone: string;
-  description: string | null;
-  account_id: number | null;
-  created_at: string;
-  updated_at: string;
-};
+type UserItemWithSection = UserItem & { _sectionKey: string };
 
 type SectionKey = 'customer' | 'courier';
 
 type UserSection = {
   sectionKey: SectionKey;
   title: string;
-  data: (UserItem & { _sectionKey: string })[];
+  data: UserItemWithSection[];
 };
-
-const FETCH_SEED_TIMEOUT_MS = 15000;
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) throw new Error(`Ошибка ${response.status}`);
-    return response.json();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function fetchApi(
-  url: string,
-  method: 'GET' | 'DELETE' = 'GET'
-): Promise<Record<string, unknown>> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_SEED_TIMEOUT_MS);
-  try {
-    const response = await fetch(url, { method, signal: controller.signal });
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(text || `Ошибка ${response.status}`);
-    }
-    return response.json();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
 
 function formatDate(s: string) {
   try {
@@ -235,10 +197,7 @@ export default function TestScreen() {
     else setLoading(true);
     setError(null);
     try {
-      const [customers, couriers] = await Promise.all([
-        fetchJson<UserItem[]>(CUSTOMERS_URL),
-        fetchJson<UserItem[]>(COURIERS_URL),
-      ]);
+      const [customers, couriers] = await Promise.all([getCustomers(), getCouriers()]);
       const customerData = customers.map((c) => ({ ...c, _sectionKey: 'customer' }));
       const courierData = couriers.map((c) => ({ ...c, _sectionKey: 'courier' }));
       setSections([
@@ -266,11 +225,7 @@ export default function TestScreen() {
   const handleFillTestData = async () => {
     setLoadingFill(true);
     try {
-      const data = (await fetchApi(SEED_FILL_URL)) as {
-        message: string;
-        customers: number;
-        couriers: number;
-      };
+      const data = await fillSeed();
       Alert.alert(
         t('common_done'),
         t('test_done_fill', { customers: data.customers, couriers: data.couriers })
@@ -292,13 +247,7 @@ export default function TestScreen() {
   const handleClearAllData = async () => {
     setLoadingClear(true);
     try {
-      const data = (await fetchApi(SEED_CLEAR_URL, 'DELETE')) as {
-        message: string;
-        reviews: number;
-        orders: number;
-        customers: number;
-        couriers: number;
-      };
+      const data = await clearSeed();
       Alert.alert(
         t('common_done'),
         t('test_done_clear', {

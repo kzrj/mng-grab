@@ -22,12 +22,18 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def get_me(
     account_id: int = Depends(get_current_account_id),
     service: AccountService = Depends(get_account_service),
+    customer_service: CustomerService = Depends(get_customer_service),
+    courier_service: CourierService = Depends(get_courier_service),
 ):
-    """Текущий аккаунт по JWT. 401 если не авторизован."""
+    """Текущий аккаунт по JWT. 401 если не авторизован. Роль по наличию в customers/couriers."""
     account = await service.get_by_id(account_id)
     if not account:
         raise HTTPException(status_code=404, detail="Аккаунт не найден")
-    return AccountRead.model_validate(account)
+    customer = await customer_service.get_by_account_id(account_id)
+    courier = await courier_service.get_by_account_id(account_id)
+    role: str = "customer" if customer else "courier" if courier else "customer"
+    data = AccountRead.model_validate(account)
+    return AccountRead(**{**data.model_dump(), "role": role})
 
 
 @router.post("/login", response_model=TokenResponse)

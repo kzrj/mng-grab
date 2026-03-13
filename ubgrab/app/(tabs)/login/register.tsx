@@ -15,45 +15,13 @@ import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/context/auth';
 import { useLanguage } from '@/context/language';
 import { useThemeColor } from '@/hooks/use-theme-color';
-
-import { API_V1 } from '@/constants/api';
-
-const REGISTER_URL = `${API_V1}/auth/register`;
-const FETCH_TIMEOUT_MS = 15000;
-
-type Role = 'customer' | 'courier';
-
-async function registerApi(
-  name: string,
-  phone: string,
-  password: string,
-  role: Role
-): Promise<{ access_token: string }> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const response = await fetch(REGISTER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, phone, password, role }),
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      const message = typeof data.detail === 'string' ? data.detail : 'Ошибка регистрации';
-      throw new Error(message);
-    }
-    return response.json();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
+import { registerApi, type RegisterRole } from '@/lib/api/auth';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<Role>('customer');
+  const [role, setRole] = useState<RegisterRole>('customer');
   const [loading, setLoading] = useState(false);
   const { setToken } = useAuth();
   const { t } = useLanguage();

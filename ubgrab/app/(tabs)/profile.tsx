@@ -13,18 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/auth';
 import { useLanguage } from '@/context/language';
 import { useThemeColor } from '@/hooks/use-theme-color';
-
-import { API_V1 } from '@/constants/api';
-
-const ME_URL = `${API_V1}/auth/me`;
-
-type AccountInfo = {
-  id: number;
-  name: string;
-  phone: string;
-  created_at: string;
-  updated_at: string;
-};
+import { getProfile, type AccountInfo } from '@/lib/api/auth';
 
 export default function ProfileScreen() {
   const { token, clearToken } = useAuth();
@@ -42,20 +31,16 @@ export default function ProfileScreen() {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     try {
-      const res = await fetch(ME_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        if (res.status === 401) {
+      try {
+        const data = await getProfile(token);
+        setAccount(data);
+      } catch (err) {
+        if (err instanceof Error && /401/.test(err.message)) {
           await clearToken();
           return;
         }
-        throw new Error(t('profile_error_load'));
+        Alert.alert(t('common_error'), t('profile_error_account'));
       }
-      const data: AccountInfo = await res.json();
-      setAccount(data);
-    } catch {
-      Alert.alert(t('common_error'), t('profile_error_account'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -114,6 +99,13 @@ export default function ProfileScreen() {
 
           <ThemedText style={styles.label}>{t('profile_phone')}</ThemedText>
           <ThemedText style={[styles.value, { color: textColor }]}>{account.phone}</ThemedText>
+
+          <ThemedText style={styles.label}>{t('profile_role')}</ThemedText>
+          <ThemedText style={[styles.value, { color: textColor }]}>
+            {account.role === 'customer'
+              ? t('profile_role_customer')
+              : t('profile_role_courier')}
+          </ThemedText>
 
           <ThemedText style={styles.label}>{t('profile_created')}</ThemedText>
           <ThemedText style={[styles.value, { color: textColor }]}>

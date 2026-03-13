@@ -29,6 +29,9 @@ class CustomerService:
     async def get_by_id(self, id: int) -> Customer | None:
         return await self._repo.get_by_id(id)
 
+    async def get_by_account_id(self, account_id: int) -> Customer | None:
+        return await self._repo.get_by_account_id(account_id)
+
     async def get_all(self, *, skip: int = 0, limit: int = 100) -> list[Customer]:
         return await self._repo.get_all(skip=skip, limit=limit)
 

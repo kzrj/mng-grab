@@ -14,32 +14,7 @@ import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/context/auth';
 import { useLanguage } from '@/context/language';
 import { useThemeColor } from '@/hooks/use-theme-color';
-
-import { API_V1 } from '@/constants/api';
-
-const LOGIN_URL = `${API_V1}/auth/login`;
-const FETCH_TIMEOUT_MS = 15000;
-
-async function loginApi(phone: string, password: string): Promise<{ access_token: string }> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const response = await fetch(LOGIN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, password }),
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      const message = typeof data.detail === 'string' ? data.detail : undefined;
-      throw new Error(message);
-    }
-    return response.json();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
+import { loginApi } from '@/lib/api/auth';
 
 export default function LoginScreen() {
   const [phone, setPhone] = useState('');

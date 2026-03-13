@@ -18,7 +18,7 @@ import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/auth';
 import { useLanguage } from '@/context/language';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { API_V1 } from '@/constants/api';
+import { getCouriers, createOrderApi, type Courier } from '@/lib/api/orders';
 
 function formatDateForApi(d: Date): string {
   const y = d.getFullYear();
@@ -33,55 +33,6 @@ function formatDateDisplay(d: Date): string {
     month: '2-digit',
     year: 'numeric',
   });
-}
-
-const ORDERS_URL = `${API_V1}/orders`;
-const COURIERS_URL = `${API_V1}/couriers`;
-const FETCH_TIMEOUT_MS = 10000;
-
-type Courier = { id: number; phone: string; description: string | null };
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) throw new Error(`Ошибка ${response.status}`);
-    return response.json();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function createOrder(
-  token: string,
-  body: {
-    where_from: string;
-    where_to: string;
-    price: number;
-    date_when: string;
-    status?: string;
-    courier_id?: number | null;
-  }
-) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const response = await fetch(ORDERS_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-    const text = await response.text();
-    if (!response.ok) throw new Error(text || `Ошибка ${response.status}`);
-    return JSON.parse(text);
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 export default function CreateOrderScreen() {
@@ -103,7 +54,7 @@ export default function CreateOrderScreen() {
   const loadLists = useCallback(async () => {
     setLoadingLists(true);
     try {
-      const cour = await fetchJson<Courier[]>(COURIERS_URL);
+      const cour = await getCouriers();
       setCouriers(cour);
     } catch {
       setCouriers([]);
@@ -147,7 +98,7 @@ export default function CreateOrderScreen() {
 
     setLoadingSubmit(true);
     try {
-      await createOrder(token, {
+      await createOrderApi(token, {
         where_from: from,
         where_to: to,
         price: priceNum,

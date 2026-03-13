@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -7,11 +7,41 @@ import { Colors } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
 import { useLanguage } from '@/context/language';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getProfile, type RegisterRole } from '@/lib/api/auth';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, token } = useAuth();
   const { t } = useLanguage();
+
+  const [role, setRole] = useState<RegisterRole | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRole = async () => {
+      if (!token) {
+        setRole(null);
+        return;
+      }
+      try {
+        const profile = await getProfile(token);
+        if (!cancelled) {
+          setRole(profile.role);
+        }
+      } catch {
+        if (!cancelled) {
+          setRole(null);
+        }
+      }
+    };
+
+    loadRole();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const headerHeight = 80;
   const colors = Colors[colorScheme ?? 'light'];
@@ -49,6 +79,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create-order"
         options={{
+          href: role === 'customer' ? undefined : null,
           title: t('tab_create_order'),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="plus.circle.fill" color={color} />,
         }}
