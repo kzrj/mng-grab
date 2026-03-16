@@ -10,6 +10,7 @@ const ru = {
   common_error: 'Ошибка',
   common_done: 'Готово',
   common_ok: 'OK',
+  common_cancel: 'Отмена',
 
   // Тест (index)
   test_greeting: 'Привет!',
@@ -31,6 +32,13 @@ const ru = {
   test_lang: 'Язык',
   test_lang_ru: 'Русский',
   test_lang_mn: 'Монгольский',
+  test_balance: 'Баланс',
+  test_topup: 'Пополнить',
+  test_topup_title: 'Пополнить баланс',
+  test_topup_amount_placeholder: 'Сумма пополнения',
+  test_topup_done: 'Баланс пополнен.',
+  test_topup_invalid_amount: 'Введите сумму больше нуля',
+  test_topup_error: 'Не удалось пополнить баланс',
 
   // Табы
   tab_header: 'Монгольский доставщик',
@@ -142,6 +150,7 @@ const mn: Record<TranslationKey, string> = {
   common_error: 'Алдаа',
   common_done: 'Болсон',
   common_ok: 'Тийм',
+  common_cancel: 'Болих',
 
   test_greeting: 'Сайн байна уу!',
   test_welcome: 'Аппликейшнд тавтай морил.',
@@ -164,6 +173,13 @@ const mn: Record<TranslationKey, string> = {
   test_lang: 'Хэл',
   test_lang_ru: 'Орос',
   test_lang_mn: 'Монгол',
+  test_balance: 'Дансны үлдэгдэл',
+  test_topup: 'Данс цэнэглэх',
+  test_topup_title: 'Дансны үлдэгдэл цэнэглэх',
+  test_topup_amount_placeholder: 'Цэнэглэх дүн',
+  test_topup_done: 'Данс амжилттай цэнэглэлээ.',
+  test_topup_invalid_amount: 'Тэгээс их дүн оруулна уу',
+  test_topup_error: 'Данс цэнэглэхэд амжилтгүй',
 
   tab_header: 'Монгол хүргэлт',
   tab_delivery: 'Хүргэлт',

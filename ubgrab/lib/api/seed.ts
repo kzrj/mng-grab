@@ -3,6 +3,7 @@ import { fetchJson } from '@/lib/http';
 
 const CUSTOMERS_URL = `${API_V1}/customers`;
 const COURIERS_URL = `${API_V1}/couriers`;
+const ACCOUNTS_URL = `${API_V1}/accounts`;
 const SEED_FILL_URL = `${API_V1}/seed/fill`;
 const SEED_CLEAR_URL = `${API_V1}/seed/clear`;
 
@@ -11,6 +12,7 @@ export type UserItem = {
   phone: string;
   description: string | null;
   account_id: number | null;
+  balance?: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -42,4 +44,12 @@ export function clearSeed() {
 }
 
 export { API_BASE };
+
+export function topupAccount(accountId: number, amount: number) {
+  return fetchJson(`${ACCOUNTS_URL}/${accountId}/topup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount }),
+  });
+}
 

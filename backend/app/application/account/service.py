@@ -78,3 +78,16 @@ class AccountService:
         logger.info("deduct_balance: списываем, баланс после account_id=%s new_balance=%s", account_id, account.balance)
         await self._repo.save(account)
         logger.info("deduct_balance: save() выполнен account_id=%s", account_id)
+
+    async def add_balance(self, account_id: int, amount: float) -> Account:
+        """Пополнить баланс аккаунта на указанную сумму > 0 и вернуть обновлённый аккаунт."""
+        logger.info("add_balance: account_id=%s amount=%s", account_id, amount)
+        if amount <= 0:
+            raise ValueError("Сумма пополнения должна быть больше нуля")
+        account = await self._repo.get_by_id(account_id)
+        if not account:
+            logger.warning("add_balance: аккаунт не найден account_id=%s", account_id)
+            raise ValueError("Аккаунт не найден")
+        account.balance += amount
+        logger.info("add_balance: новый баланс account_id=%s balance=%s", account_id, account.balance)
+        return await self._repo.save(account)

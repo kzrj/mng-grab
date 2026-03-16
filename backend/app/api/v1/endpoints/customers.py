@@ -11,11 +11,23 @@ router = APIRouter(prefix="/customers", tags=["customers"])
 @router.get("", response_model=list[CustomerRead])
 async def list_customers(
     service: CustomerService = Depends(get_customer_service),
+    account_service: AccountService = Depends(get_account_service),
     skip: int = 0,
     limit: int = 100,
 ):
     entities = await service.get_all(skip=skip, limit=limit)
-    return [CustomerRead.model_validate(e) for e in entities]
+    result: list[CustomerRead] = []
+    for entity in entities:
+        base = CustomerRead.model_validate(entity)
+        name: str | None = None
+        balance: float | None = None
+        if entity.account_id:
+            account = await account_service.get_by_id(entity.account_id)
+            if account:
+                name = account.name
+                balance = account.balance
+        result.append(CustomerRead(**{**base.model_dump(), "name": name, "balance": balance}))
+    return result
 
 
 @router.get("/{customer_id}", response_model=CustomerRead)
@@ -28,12 +40,14 @@ async def get_customer(
     if not entity:
         raise HTTPException(status_code=404, detail="Customer not found")
     data = CustomerRead.model_validate(entity)
-    name = None
+    name: str | None = None
+    balance: float | None = None
     if entity.account_id:
         account = await account_service.get_by_id(entity.account_id)
         if account:
             name = account.name
-    return CustomerRead(**{**data.model_dump(), "name": name})
+            balance = account.balance
+    return CustomerRead(**{**data.model_dump(), "name": name, "balance": balance})
 
 
 @router.post("", response_model=CustomerRead, status_code=201)

@@ -6,6 +6,7 @@ import {
   RefreshControl,
   SectionList,
   StyleSheet,
+  TextInput,
   View,
 } from 'react-native';
 
@@ -20,6 +21,7 @@ import {
   getCouriers,
   fillSeed,
   clearSeed,
+  topupAccount,
   type UserItem,
 } from '@/lib/api/seed';
 
@@ -45,7 +47,19 @@ function formatDate(s: string) {
   }
 }
 
-function UserItemRow({ item, t }: { item: UserItem; t: (k: import('@/i18n/translations').TranslationKey, p?: Record<string, string | number>) => string }) {
+function UserItemRow({
+  item,
+  t,
+  onTopupPress,
+}: {
+  item: UserItemWithSection;
+  t: (k: import('@/i18n/translations').TranslationKey, p?: Record<string, string | number>) => string;
+  onTopupPress?: (item: UserItemWithSection) => void;
+}) {
+  const isCustomer = item._sectionKey === 'customer';
+  const hasAccount = item.account_id != null;
+  const canTopup = isCustomer && hasAccount && onTopupPress;
+
   return (
     <ThemedView style={styles.item}>
       <ThemedText type="defaultSemiBold">{item.phone}</ThemedText>
@@ -56,6 +70,16 @@ function UserItemRow({ item, t }: { item: UserItem; t: (k: import('@/i18n/transl
         {t('test_id')}: {item.id}
         {item.account_id != null ? ` · ${t('test_account')}: ${item.account_id}` : ''} · {formatDate(item.created_at)}
       </ThemedText>
+      {isCustomer && hasAccount ? (
+        <ThemedText style={styles.meta}>
+          {t('test_balance')}: {typeof item.balance === 'number' ? item.balance : 0} ₽
+        </ThemedText>
+      ) : null}
+      {canTopup ? (
+        <Pressable style={styles.topupButton} onPress={() => onTopupPress?.(item)}>
+          <ThemedText style={styles.topupButtonText}>{t('test_topup')}</ThemedText>
+        </Pressable>
+      ) : null}
     </ThemedView>
   );
 }
@@ -187,6 +211,10 @@ export default function TestScreen() {
   const [expandedSections, setExpandedSections] = useState<Record<SectionKey, boolean>>(() =>
     Object.fromEntries(SECTION_KEYS.map((k) => [k, false])) as Record<SectionKey, boolean>
   );
+  const [topupTarget, setTopupTarget] = useState<UserItemWithSection | null>(null);
+  const [topupAmount, setTopupAmount] = useState('');
+  const [topupLoading, setTopupLoading] = useState(false);
+  const [topupVisible, setTopupVisible] = useState(false);
 
   const toggleSection = useCallback((key: SectionKey) => {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -290,6 +318,36 @@ export default function TestScreen() {
   }));
   const totalItems = sections.reduce((sum, s) => sum + s.data.length, 0);
 
+  const handleTopupConfirm = useCallback(async () => {
+    if (!topupTarget || topupTarget.account_id == null) {
+      setTopupVisible(false);
+      return;
+    }
+    const raw = topupAmount.replace(',', '.').trim();
+    const amount = parseFloat(raw);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      Alert.alert(t('common_error'), t('test_topup_invalid_amount'));
+      return;
+    }
+    setTopupLoading(true);
+    try {
+      await topupAccount(topupTarget.account_id, amount);
+      Alert.alert(t('common_done'), t('test_topup_done'));
+      setTopupVisible(false);
+      await load(true);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.name === 'AbortError'
+            ? t('test_error_timeout')
+            : err.message || t('test_topup_error')
+          : t('test_topup_error');
+      Alert.alert(t('common_error'), message);
+    } finally {
+      setTopupLoading(false);
+    }
+  }, [topupTarget, topupAmount, t, load]);
+
   const listEmpty =
     loading && sections.length === 0 ? (
       <ThemedView style={styles.centered}>
@@ -309,7 +367,13 @@ export default function TestScreen() {
       <SectionList
         sections={displaySections}
         keyExtractor={(item) => `${item._sectionKey}-${item.id}`}
-        renderItem={({ item }) => <UserItemRow item={item} t={t} />}
+        renderItem={({ item }) => (
+          <UserItemRow item={item} t={t} onTopupPress={(u) => {
+            setTopupTarget(u);
+            setTopupAmount('');
+            setTopupVisible(true);
+          }} />
+        )}
         renderSectionHeader={({ section }) => {
           const originalSection = sections.find((s) => s.sectionKey === section.sectionKey);
           const count = originalSection?.data.length ?? 0;
@@ -332,6 +396,57 @@ export default function TestScreen() {
         ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: borderColor }]} />}
         SectionSeparatorComponent={() => <View style={[styles.sectionSeparator, { backgroundColor: borderColor }]} />}
       />
+      {topupVisible && (
+        <View style={styles.topupModalOverlay}>
+          <ThemedView style={styles.topupModal}>
+            <ThemedText type="subtitle" style={styles.topupTitle}>
+              {t('test_topup_title')}
+            </ThemedText>
+            {topupTarget && (
+              <ThemedText style={styles.topupSubtitle}>
+                {topupTarget.phone}
+                {topupTarget.account_id != null
+                  ? ` · ${t('test_account')}: ${topupTarget.account_id}`
+                  : ''}
+              </ThemedText>
+            )}
+            <View style={styles.topupInputWrapper}>
+              <ThemedText style={styles.topupLabel}>{t('test_topup_amount_placeholder')}</ThemedText>
+              <View style={styles.topupInputRow}>
+                <TextInput
+                  style={styles.topupInput}
+                  value={topupAmount}
+                  onChangeText={setTopupAmount}
+                  placeholder={t('test_topup_amount_placeholder')}
+                  placeholderTextColor="#687076"
+                  keyboardType="decimal-pad"
+                  editable={!topupLoading}
+                />
+              </View>
+            </View>
+            <View style={styles.topupButtonsRow}>
+              <Pressable
+                style={[styles.button, styles.topupButtonSecondary]}
+                onPress={() => !topupLoading && setTopupVisible(false)}
+                disabled={topupLoading}
+              >
+                <ThemedText style={styles.buttonText}>{t('common_cancel')}</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.button, styles.topupButtonPrimary]}
+                onPress={handleTopupConfirm}
+                disabled={topupLoading}
+              >
+                {topupLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <ThemedText style={styles.buttonText}>{t('common_ok')}</ThemedText>
+                )}
+              </Pressable>
+            </View>
+          </ThemedView>
+        </View>
+      )}
     </ThemedView>
   );
 }
@@ -463,5 +578,71 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
+  },
+  topupButton: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(0,0,0,0.2)',
+  },
+  topupButtonText: {
+    fontSize: 12,
+    opacity: 0.9,
+  },
+  topupModalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  topupModal: {
+    width: '80%',
+    borderRadius: 16,
+    padding: 20,
+  },
+  topupTitle: {
+    marginBottom: 8,
+  },
+  topupSubtitle: {
+    fontSize: 14,
+    opacity: 0.8,
+    marginBottom: 16,
+  },
+  topupInputWrapper: {
+    marginBottom: 16,
+  },
+  topupLabel: {
+    fontSize: 12,
+    opacity: 0.8,
+    marginBottom: 4,
+  },
+  topupInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  topupInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+  },
+  topupButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  topupButtonSecondary: {
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    minWidth: 120,
+  },
+  topupButtonPrimary: {
+    backgroundColor: '#0a7ea4',
+    minWidth: 140,
   },
 });
