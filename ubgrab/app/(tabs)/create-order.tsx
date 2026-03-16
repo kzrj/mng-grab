@@ -113,11 +113,17 @@ export default function CreateOrderScreen() {
       setDateWhen(null);
       setCourierId(null);
     } catch (err) {
+      const rawMessage = err instanceof Error ? err.message : '';
+      const isInsufficientFunds =
+        typeof rawMessage === 'string' &&
+        (rawMessage.includes('Недостаточно средств') || rawMessage.includes('insufficient'));
       const message =
         err instanceof Error
           ? err.name === 'AbortError'
             ? t('create_error_timeout')
-            : err.message
+            : isInsufficientFunds
+              ? t('create_error_insufficient_funds')
+              : rawMessage || t('create_error_fail')
           : t('create_error_fail');
       Alert.alert(t('common_error'), message);
     } finally {

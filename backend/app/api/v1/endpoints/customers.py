@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.dependencies import get_customer_service
+from app.api.dependencies import get_account_service, get_customer_service
+from app.application.account.service import AccountService
 from app.application.customer.service import CustomerService
 from app.api.dto.customer import CustomerCreate, CustomerRead, CustomerUpdate
 
@@ -18,11 +19,21 @@ async def list_customers(
 
 
 @router.get("/{customer_id}", response_model=CustomerRead)
-async def get_customer(customer_id: int, service: CustomerService = Depends(get_customer_service)):
+async def get_customer(
+    customer_id: int,
+    service: CustomerService = Depends(get_customer_service),
+    account_service: AccountService = Depends(get_account_service),
+):
     entity = await service.get_by_id(customer_id)
     if not entity:
         raise HTTPException(status_code=404, detail="Customer not found")
-    return CustomerRead.model_validate(entity)
+    data = CustomerRead.model_validate(entity)
+    name = None
+    if entity.account_id:
+        account = await account_service.get_by_id(entity.account_id)
+        if account:
+            name = account.name
+    return CustomerRead(**{**data.model_dump(), "name": name})
 
 
 @router.post("", response_model=CustomerRead, status_code=201)

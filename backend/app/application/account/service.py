@@ -1,7 +1,10 @@
+import logging
 from datetime import datetime
 
 from app.domain.account.entity import Account
 from app.domain.account.repository import IAccountRepository
+
+logger = logging.getLogger(__name__)
 
 
 class AccountService:
@@ -23,6 +26,7 @@ class AccountService:
             name=name.strip(),
             phone=phone.strip(),
             password=password,
+            balance=100.0,
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
@@ -56,3 +60,21 @@ class AccountService:
             return False
         await self._repo.delete(account)
         return True
+
+    async def deduct_balance(self, account_id: int, amount: float) -> None:
+        """Списать сумму с баланса. ValueError при недостатке средств."""
+        logger.info("deduct_balance: account_id=%s amount=%s", account_id, amount)
+        if amount < 0:
+            raise ValueError("Сумма списания не может быть отрицательной")
+        account = await self._repo.get_by_id(account_id)
+        if not account:
+            logger.warning("deduct_balance: аккаунт не найден account_id=%s", account_id)
+            raise ValueError("Аккаунт не найден")
+        logger.info("deduct_balance: баланс до списания account_id=%s balance=%s", account_id, account.balance)
+        if account.balance < amount:
+            logger.warning("deduct_balance: недостаточно средств account_id=%s balance=%s amount=%s", account_id, account.balance, amount)
+            raise ValueError("Недостаточно средств")
+        account.balance -= amount
+        logger.info("deduct_balance: списываем, баланс после account_id=%s new_balance=%s", account_id, account.balance)
+        await self._repo.save(account)
+        logger.info("deduct_balance: save() выполнен account_id=%s", account_id)

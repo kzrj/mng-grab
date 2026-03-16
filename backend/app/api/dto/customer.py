@@ -23,5 +23,6 @@ class CustomerRead(CustomerBase):
 
     id: int
     account_id: int | None = None
+    name: str | None = None
     created_at: datetime
     updated_at: datetime

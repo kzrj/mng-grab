@@ -1,9 +1,13 @@
+import logging
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.account.entity import Account
 from app.domain.account.repository import IAccountRepository
 from app.infrastructure.persistence.models import AccountModel
+
+logger = logging.getLogger(__name__)
 
 
 class AccountRepository(IAccountRepository):
@@ -16,6 +20,7 @@ class AccountRepository(IAccountRepository):
             name=model.name,
             phone=model.phone,
             password=model.password,
+            balance=float(model.balance),
             created_at=model.created_at,
             updated_at=model.updated_at,
         )
@@ -39,6 +44,7 @@ class AccountRepository(IAccountRepository):
             name=account.name,
             phone=account.phone,
             password=account.password,
+            balance=account.balance,
         )
         self._session.add(model)
         await self._session.flush()
@@ -46,12 +52,15 @@ class AccountRepository(IAccountRepository):
         return self._to_entity(model)
 
     async def save(self, account: Account) -> Account:
+        logger.info("AccountRepository.save: account_id=%s balance=%s", account.id, account.balance)
         result = await self._session.execute(select(AccountModel).where(AccountModel.id == account.id))
         model = result.scalar_one()
         model.name = account.name
         model.phone = account.phone
         model.password = account.password
+        model.balance = account.balance
         await self._session.flush()
+        logger.info("AccountRepository.save: flush выполнен account_id=%s", account.id)
         await self._session.refresh(model)
         return self._to_entity(model)
 

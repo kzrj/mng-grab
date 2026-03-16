@@ -25,6 +25,7 @@ class AccountModel(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True, index=True)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
+    balance: Mapped[float] = mapped_column(Float, nullable=False, default=100.0, server_default="100")
 
     customers: Mapped[list["CustomerModel"]] = relationship("CustomerModel", back_populates="account")
     couriers: Mapped[list["CourierModel"]] = relationship("CourierModel", back_populates="account")

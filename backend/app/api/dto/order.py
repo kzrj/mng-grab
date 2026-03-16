@@ -14,10 +14,9 @@ class OrderBase(BaseModel):
 
 
 class OrderCreate(BaseModel):
-    """Создание заказа. customer_id задаётся на бэкенде из JWT (только заказчик)."""
+    """Создание заказа. customer_id — из JWT. Цена заказа не передаётся; с баланса списывается ORDER_CREATION_PRICE."""
     where_to: str = Field(..., min_length=1, max_length=255)
     where_from: str = Field(..., min_length=1, max_length=255)
-    price: float = Field(default=0, ge=0)
     date_when: date
     status: str = Field(default="new", max_length=50)
 

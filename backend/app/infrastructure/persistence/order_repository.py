@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.order.entity import Order
@@ -66,3 +66,10 @@ class OrderRepository(IOrderRepository):
         model = result.scalar_one()
         await self._session.delete(model)
         await self._session.flush()
+
+    async def bulk_set_status_where_not(self, new_status: str, exclude_status: str) -> int:
+        """Один запрос: SET status = new_status WHERE status != exclude_status. Возвращает число обновлённых строк."""
+        result = await self._session.execute(
+            update(OrderModel).where(OrderModel.status != exclude_status).values(status=new_status)
+        )
+        return result.rowcount or 0

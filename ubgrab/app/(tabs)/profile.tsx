@@ -107,6 +107,15 @@ export default function ProfileScreen() {
               : t('profile_role_courier')}
           </ThemedText>
 
+          {account.role === 'customer' && (
+            <>
+              <ThemedText style={styles.label}>{t('profile_balance')}</ThemedText>
+              <ThemedText style={[styles.value, { color: textColor }]}>
+                {typeof account.balance === 'number' ? `${account.balance} ₽` : '—'}
+              </ThemedText>
+            </>
+          )}
+
           <ThemedText style={styles.label}>{t('profile_created')}</ThemedText>
           <ThemedText style={[styles.value, { color: textColor }]}>
             {formatDate(account.created_at)}

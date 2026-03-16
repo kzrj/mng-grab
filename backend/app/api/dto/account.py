@@ -27,6 +27,9 @@ class AccountRead(BaseModel):
     id: int
     name: str
     phone: str
+    balance: float = 0
     role: Literal["customer", "courier"] | None = None
+    customer_id: int | None = None
+    courier_id: int | None = None
     created_at: datetime
     updated_at: datetime

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.dependencies import get_courier_service
+from app.api.dependencies import get_account_service, get_courier_service
+from app.application.account.service import AccountService
 from app.application.courier.service import CourierService
 from app.api.dto.courier import CourierCreate, CourierRead, CourierUpdate
 
@@ -18,11 +19,21 @@ async def list_couriers(
 
 
 @router.get("/{courier_id}", response_model=CourierRead)
-async def get_courier(courier_id: int, service: CourierService = Depends(get_courier_service)):
+async def get_courier(
+    courier_id: int,
+    service: CourierService = Depends(get_courier_service),
+    account_service: AccountService = Depends(get_account_service),
+):
     entity = await service.get_by_id(courier_id)
     if not entity:
         raise HTTPException(status_code=404, detail="Courier not found")
-    return CourierRead.model_validate(entity)
+    data = CourierRead.model_validate(entity)
+    name = None
+    if entity.account_id:
+        account = await account_service.get_by_id(entity.account_id)
+        if account:
+            name = account.name
+    return CourierRead(**{**data.model_dump(), "name": name})
 
 
 @router.post("", response_model=CourierRead, status_code=201)

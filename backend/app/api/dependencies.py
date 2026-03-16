@@ -53,8 +53,11 @@ def get_courier_service(repo: CourierRepository = Depends(get_courier_repository
     return CourierService(repo)
 
 
-def get_order_service(repo: OrderRepository = Depends(get_order_repository)) -> OrderService:
-    return OrderService(repo)
+def get_order_service(
+    repo: OrderRepository = Depends(get_order_repository),
+    account_service: AccountService = Depends(get_account_service),
+) -> OrderService:
+    return OrderService(repo, account_service)
 
 
 def get_review_service(repo: ReviewRepository = Depends(get_review_repository)) -> ReviewService:

@@ -36,7 +36,10 @@ export type AccountInfo = {
   id: number;
   name: string;
   phone: string;
+  balance?: number;
   role: RegisterRole;
+  customer_id: number | null;
+  courier_id: number | null;
   created_at: string;
   updated_at: string;
 };

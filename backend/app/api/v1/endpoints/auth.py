@@ -32,8 +32,10 @@ async def get_me(
     customer = await customer_service.get_by_account_id(account_id)
     courier = await courier_service.get_by_account_id(account_id)
     role: str = "customer" if customer else "courier" if courier else "customer"
+    customer_id = customer.id if customer else None
+    courier_id = courier.id if courier else None
     data = AccountRead.model_validate(account)
-    return AccountRead(**{**data.model_dump(), "role": role})
+    return AccountRead(**{**data.model_dump(), "role": role, "customer_id": customer_id, "courier_id": courier_id})
 
 
 @router.post("/login", response_model=TokenResponse)

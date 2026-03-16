@@ -4,12 +4,13 @@ from datetime import datetime
 
 @dataclass
 class Account:
-    """Аккаунт — для авторизации (имя, телефон, пароль)."""
+    """Аккаунт — для авторизации (имя, телефон, пароль). Баланс — для заказчика при создании заказа."""
 
     id: int
     name: str
     phone: str
     password: str
+    balance: float
     created_at: datetime
     updated_at: datetime
 

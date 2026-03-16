@@ -42,6 +42,11 @@ async def _run_account_migrations(conn) -> None:
     await conn.execute(text(
         "CREATE INDEX IF NOT EXISTS ix_couriers_account_id ON couriers (account_id)"
     ))
+    # Баланс аккаунта (для заказчика при создании заказа). По умолчанию 100.
+    await conn.execute(text("""
+        ALTER TABLE accounts
+        ADD COLUMN IF NOT EXISTS balance DOUBLE PRECISION NOT NULL DEFAULT 100
+    """))
 
 
 async def get_db() -> AsyncSession:
