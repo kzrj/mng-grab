@@ -84,6 +84,27 @@ class OrderService:
     async def get_all(self, *, skip: int = 0, limit: int = 100) -> list[Order]:
         return await self._repo.get_all(skip=skip, limit=limit)
 
+    async def search(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        status: str | None = None,
+        customer_name: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        place: str | None = None,
+    ) -> list[Order]:
+        return await self._repo.search(
+            skip=skip,
+            limit=limit,
+            status=status,
+            customer_name=customer_name,
+            date_from=date_from,
+            date_to=date_to,
+            place=place,
+        )
+
     async def update(
         self,
         id: int,

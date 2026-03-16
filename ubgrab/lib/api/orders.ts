@@ -1,12 +1,14 @@
 import { API_V1 } from '@/constants/api';
 import { fetchJson } from '@/lib/http';
 
+export type OrderStatus = 'active' | 'expired' | 'completed' | 'canceled';
+
 export type Order = {
   id: number;
   where_to: string;
   where_from: string;
   price: number;
-  status: string;
+  status: OrderStatus;
   date_when: string;
   customer_id: number;
   courier_id: number | null;
@@ -31,12 +33,33 @@ export type Customer = {
   name: string | null;
 };
 
+export type OrdersFilters = {
+  status?: string;
+  customer_name?: string;
+  date_from?: string;
+  date_to?: string;
+  place?: string;
+};
+
 const ORDERS_URL = `${API_V1}/orders`;
 const COURIERS_URL = `${API_V1}/couriers`;
 const CUSTOMERS_URL = `${API_V1}/customers`;
 
-export function getOrders() {
-  return fetchJson<Order[]>(ORDERS_URL);
+export function getOrders(filters?: OrdersFilters) {
+  let url = ORDERS_URL;
+  if (filters) {
+    const params = new URLSearchParams();
+    if (filters.status) params.append('status', filters.status);
+    if (filters.customer_name) params.append('customer_name', filters.customer_name);
+    if (filters.date_from) params.append('date_from', filters.date_from);
+    if (filters.date_to) params.append('date_to', filters.date_to);
+    if (filters.place) params.append('place', filters.place);
+    const qs = params.toString();
+    if (qs) {
+      url = `${ORDERS_URL}?${qs}`;
+    }
+  }
+  return fetchJson<Order[]>(url);
 }
 
 export function getOrder(id: string | number) {

@@ -64,7 +64,7 @@ class OrderModel(Base, TimestampMixin):
     where_to: Mapped[str] = mapped_column(String(255), nullable=False)
     where_from: Mapped[str] = mapped_column(String(255), nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False)
-    status: Mapped[str] = mapped_column(String(50), nullable=False, default="new")
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="active")
     date_when: Mapped[date] = mapped_column(Date, nullable=False)
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=False)
     courier_id: Mapped[int | None] = mapped_column(ForeignKey("couriers.id"), nullable=True)

@@ -7,6 +7,7 @@ const HEADER_HEIGHT = 32;
 function OrdersHeader(props: any) {
   const { options, navigation, back } = props;
   const title = options.title ?? options.headerTitle ?? '';
+  const headerRight = options.headerRight?.();
 
   return (
     <View style={styles.headerContainer}>
@@ -19,12 +20,15 @@ function OrdersHeader(props: any) {
           <Text style={styles.backText}>{'‹'}</Text>
         </Pressable>
       ) : null}
-      <Text
-        numberOfLines={1}
-        style={styles.headerTitle}
-      >
-        {title}
-      </Text>
+      <View style={styles.headerCenterRight}>
+        <Text
+          numberOfLines={1}
+          style={styles.headerTitle}
+        >
+          {title}
+        </Text>
+        {headerRight ? <View style={styles.headerRight}>{headerRight}</View> : null}
+      </View>
     </View>
   );
 }
@@ -70,9 +74,18 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 22,
   },
+  headerCenterRight: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   headerTitle: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  headerRight: {
+    marginLeft: 8,
   },
 });
 

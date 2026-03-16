@@ -46,7 +46,7 @@ def print_orders() -> None:
 @celery_app.task
 def expire_orders() -> None:
     """
-    Каждые 5 минут помечаем заказы как 'Истечен',
+    Каждые 5 минут помечаем заказы как 'expired',
     если у них ещё не такой статус.
     """
 
@@ -57,9 +57,9 @@ def expire_orders() -> None:
         async with session_factory() as session:
             repo = OrderRepository(session)
             # Один запрос UPDATE — без цикла, чтобы не было "another operation is in progress"
-            updated = await repo.bulk_set_status_where_not("Истечен", "Истечен")
+            updated = await repo.bulk_set_status_where_not("expired", "expired")
             await session.commit()
-            print(f"[expire_orders] updated {updated} orders to 'Истечен'")
+            print(f"[expire_orders] updated {updated} orders to 'expired'")
 
     asyncio.run(_expire())
 

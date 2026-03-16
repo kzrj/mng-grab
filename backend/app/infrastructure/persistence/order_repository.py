@@ -1,9 +1,11 @@
-from sqlalchemy import select, update
+from datetime import date
+
+from sqlalchemy import select, update, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.order.entity import Order
 from app.domain.order.repository import IOrderRepository
-from app.infrastructure.persistence.models import OrderModel
+from app.infrastructure.persistence.models import OrderModel, CustomerModel, AccountModel
 
 
 class OrderRepository(IOrderRepository):
@@ -31,6 +33,43 @@ class OrderRepository(IOrderRepository):
 
     async def get_all(self, *, skip: int = 0, limit: int = 100) -> list[Order]:
         result = await self._session.execute(select(OrderModel).offset(skip).limit(limit))
+        return [self._to_entity(m) for m in result.scalars().all()]
+
+    async def search(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        status: str | None = None,
+        customer_name: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        place: str | None = None,
+    ) -> list[Order]:
+        stmt = (
+            select(OrderModel)
+            .join(CustomerModel, OrderModel.customer_id == CustomerModel.id)
+            .join(AccountModel, CustomerModel.account_id == AccountModel.id, isouter=True)
+        )
+        if status is not None:
+            stmt = stmt.where(OrderModel.status == status)
+        if customer_name:
+            pattern_name = f"%{customer_name}%"
+            stmt = stmt.where(AccountModel.name.ilike(pattern_name))
+        if date_from is not None:
+            stmt = stmt.where(OrderModel.date_when >= date_from)
+        if date_to is not None:
+            stmt = stmt.where(OrderModel.date_when <= date_to)
+        if place:
+            pattern = f"%{place}%"
+            stmt = stmt.where(
+                or_(
+                    OrderModel.where_from.ilike(pattern),
+                    OrderModel.where_to.ilike(pattern),
+                )
+            )
+        stmt = stmt.offset(skip).limit(limit)
+        result = await self._session.execute(stmt)
         return [self._to_entity(m) for m in result.scalars().all()]
 
     async def add(self, order: Order) -> Order:

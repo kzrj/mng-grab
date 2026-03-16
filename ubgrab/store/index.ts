@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getOrder, getOrders, type Order } from '@/lib/api/orders';
+import { getOrder, getOrders, type Order, type OrdersFilters } from '@/lib/api/orders';
 
 // --- Orders slice (кэш + загрузка)
 type OrdersState = {
@@ -7,7 +7,7 @@ type OrdersState = {
   byId: Record<number, Order>;
   listLoading: boolean;
   listError: string | null;
-  loadOrders: () => Promise<void>;
+  loadOrders: (filters?: OrdersFilters) => Promise<void>;
   loadOrder: (id: string | number) => Promise<Order | null>;
   setOrders: (orders: Order[]) => void;
   clearOrders: () => void;
@@ -19,10 +19,10 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
   listLoading: false,
   listError: null,
 
-  loadOrders: async () => {
+  loadOrders: async (filters) => {
     set({ listLoading: true, listError: null });
     try {
-      const data = await getOrders();
+      const data = await getOrders(filters);
       const byId: Record<number, Order> = {};
       data.forEach((o) => {
         byId[o.id] = o;

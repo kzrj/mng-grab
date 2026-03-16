@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import date
 
 from app.domain.order.entity import Order
 
@@ -12,6 +13,20 @@ class IOrderRepository(ABC):
 
     @abstractmethod
     async def get_all(self, *, skip: int = 0, limit: int = 100) -> list[Order]:
+        ...
+
+    @abstractmethod
+    async def search(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        status: str | None = None,
+        customer_name: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        place: str | None = None,
+    ) -> list[Order]:
         ...
 
     @abstractmethod

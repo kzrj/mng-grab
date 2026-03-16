@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -23,8 +24,21 @@ async def list_orders(
     service: OrderService = Depends(get_order_service),
     skip: int = 0,
     limit: int = 100,
+    status: str | None = None,
+    customer_name: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    place: str | None = None,
 ):
-    entities = await service.get_all(skip=skip, limit=limit)
+    entities = await service.search(
+        skip=skip,
+        limit=limit,
+        status=status,
+        customer_name=customer_name,
+        date_from=date_from,
+        date_to=date_to,
+        place=place,
+    )
     return [OrderRead.model_validate(e) for e in entities]
 
 

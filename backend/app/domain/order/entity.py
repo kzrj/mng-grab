@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 
+from app.api.dto.order import OrderStatus
+
 
 @dataclass
 class Order:
@@ -10,7 +12,7 @@ class Order:
     where_to: str
     where_from: str
     price: float
-    status: str
+    status: OrderStatus
     date_when: date
     customer_id: int
     courier_id: int | None
