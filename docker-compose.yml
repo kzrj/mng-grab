@@ -87,9 +87,6 @@ services:
       - "8081:8081"   # Metro bundler
       - "19000:19000" # Expo Dev Tools
       - "19001:19001" # Expo Dev Tools (legacy)
-    volumes:
-      - ./ubgrab:/app
-      # Боевой: node_modules из образа (npm ci при сборке). Для локальной разработки на Windows см. dc_local.yml
     environment:
       - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
       - CI=1
