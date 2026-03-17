@@ -7,6 +7,10 @@ venv/
 .env
 .env.local
 
+# Celery Beat: локальный файл расписания (время последнего запуска задач)
+celerybeat-schedule
+celerybeat-schedule.db
+
 # === ubgrab (Expo/React Native) ===
 # dependencies
 node_modules/
