@@ -37,6 +37,7 @@ const ORDER_STATUS_LABEL_KEY: Record<OrderStatus, string> = {
   completed: 'order_status_completed',
   canceled: 'order_status_canceled',
 };
+const BUILD_TAG = '2026-03-23-a';
 
 function OrderItem({
   item,
@@ -319,6 +320,7 @@ export default function OrdersScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.searchWrapper}>
+        <ThemedText style={styles.buildTag}>build: {BUILD_TAG}</ThemedText>
         <TextInput
           style={styles.searchInput}
           value={quickSearch}
@@ -518,6 +520,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 4,
+  },
+  buildTag: {
+    fontSize: 11,
+    opacity: 0.55,
+    marginBottom: 6,
+    textAlign: 'right',
   },
   searchInput: {
     borderWidth: 1,
