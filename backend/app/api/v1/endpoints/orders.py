@@ -8,11 +8,12 @@ from app.api.dependencies import (
     get_customer_service,
     get_current_courier_id,
     get_optional_courier_id,
+    get_optional_current_customer_id,
     get_order_service,
 )
 from app.application.customer.service import CustomerService
 from app.application.order.service import OrderService
-from app.api.dto.order import OrderCreate, OrderRead, OrderUpdate
+from app.api.dto.order import OrderCreate, OrderRead, OrderUpdate, OrderStatus
 from app.constants import ORDER_CREATION_PRICE
 
 logger = logging.getLogger(__name__)
@@ -24,20 +25,30 @@ async def list_orders(
     service: OrderService = Depends(get_order_service),
     skip: int = 0,
     limit: int = 100,
-    status: str | None = None,
+    status: OrderStatus | None = None,
+    statuses: str | None = None,
     customer_name: str | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
     place: str | None = None,
+    only_own: bool = False,
+    customer_id: int | None = Depends(get_optional_current_customer_id),
 ):
+    statuses_list = (
+        [s.strip() for s in statuses.split(",") if s.strip()] if statuses is not None else None
+    )
+    effective_statuses = (
+        statuses_list if statuses_list is not None else ([str(status)] if status is not None else None)
+    )
     entities = await service.search(
         skip=skip,
         limit=limit,
-        status=status,
+        statuses=effective_statuses,
         customer_name=customer_name,
         date_from=date_from,
         date_to=date_to,
         place=place,
+        customer_id=customer_id,
     )
     return [OrderRead.model_validate(e) for e in entities]
 
@@ -73,6 +84,7 @@ async def create_order(
             deduction_amount=ORDER_CREATION_PRICE,
             status=data.status,
             courier_id=None,
+            information=data.information,
         )
         return OrderRead.model_validate(entity)
     except ValueError as e:
@@ -100,6 +112,7 @@ async def update_order(
         status=data.status,
         date_when=data.date_when,
         courier_id=courier_id,
+        information=data.information,
     )
     if not entity:
         raise HTTPException(status_code=404, detail="Order not found")

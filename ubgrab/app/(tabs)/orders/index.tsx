@@ -11,7 +11,9 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useAuth } from '@/context/auth';
 import { useLanguage } from '@/context/language';
+import { getProfile, type AccountInfo } from '@/lib/api/auth';
 import { useOrdersStore } from '@/store';
 import { useNavigation, useRouter } from 'expo-router';
 import type { Order, OrdersFilters, OrderStatus } from '@/lib/api/orders';
@@ -52,6 +54,7 @@ function OrderItem({
         <ThemedText type="defaultSemiBold">
           {item.where_from} → {item.where_to}
         </ThemedText>
+        {item.information ? <ThemedText style={styles.info}>{item.information}</ThemedText> : null}
         <ThemedText style={styles.meta}>
           {formatDate(item.date_when)} · {item.price.toFixed(0)} ₽ ·{' '}
           {t(ORDER_STATUS_LABEL_KEY[item.status]) ?? item.status}
@@ -65,6 +68,7 @@ export default function OrdersScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { t } = useLanguage() as any;
+  const { token, isLoading: authLoading } = useAuth();
   const {
     list,
     listLoading,
@@ -73,9 +77,13 @@ export default function OrdersScreen() {
   } = useOrdersStore();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [filters, setFilters] = useState<OrdersFilters | undefined>(undefined);
+  const [profile, setProfile] = useState<AccountInfo | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileReady, setProfileReady] = useState(false);
+  const [filters, setFilters] = useState<OrdersFilters | undefined>({ statuses: ['active'] });
   const [filtersVisible, setFiltersVisible] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
+  const [onlyOwnOrders, setOnlyOwnOrders] = useState(true);
+  const [selectedStatuses, setSelectedStatuses] = useState<OrderStatus[]>(['active']);
   const [customerNameFilter, setCustomerNameFilter] = useState('');
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
@@ -84,37 +92,106 @@ export default function OrdersScreen() {
   const [customerNameSuggestions, setCustomerNameSuggestions] = useState<string[]>([]);
   const [placeSuggestions, setPlaceSuggestions] = useState<string[]>([]);
 
+  const isCustomer = profile?.role === 'customer';
+
   const load = useCallback(
     async (isRefresh = false, nextFilters?: OrdersFilters | undefined) => {
       const effectiveFilters = nextFilters ?? filters;
       if (isRefresh) setRefreshing(true);
-      await loadOrders(effectiveFilters);
+      await loadOrders(effectiveFilters, token);
       setRefreshing(false);
     },
-    [loadOrders, filters]
+    [loadOrders, filters, token]
   );
 
   useEffect(() => {
+    if (authLoading || !profileReady) return;
     load();
-  }, [load]);
+  }, [load, authLoading, profileReady]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!token) {
+      setProfile(null);
+      setProfileLoading(false);
+      setProfileReady(true);
+      setOnlyOwnOrders(false);
+      setFilters(undefined);
+      return;
+    }
+
+    let cancelled = false;
+    setProfileReady(false);
+    setProfileLoading(true);
+    getProfile(token)
+      .then((data) => {
+        if (!cancelled) setProfile(data);
+      })
+      .catch(() => {
+        if (!cancelled) setProfile(null);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setProfileLoading(false);
+          setProfileReady(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, authLoading]);
+
+  useEffect(() => {
+    if (authLoading || !profileReady) return;
+    if (isCustomer) {
+      setOnlyOwnOrders(true);
+      setFilters((prev) => ({ ...(prev ?? {}), only_own: true }));
+    } else {
+      setOnlyOwnOrders(false);
+      setFilters((prev) => (prev ? { ...prev, only_own: undefined } : undefined));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCustomer, authLoading, profileReady]);
 
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Pressable onPress={() => setFiltersVisible(true)}>
+        <Pressable onPress={() => setFiltersVisible(true)} hitSlop={6}>
           <ThemedText>{t('orders_filters_button') ?? 'Фильтры'}</ThemedText>
         </Pressable>
       ),
+      headerMiddle: () =>
+        isCustomer ? (
+          <Pressable
+            onPress={handleToggleOnlyOwn}
+            style={styles.headerOnlyOwnToggle}
+            hitSlop={6}
+          >
+            <View
+              style={[
+                styles.headerOnlyOwnCheckbox,
+                onlyOwnOrders && styles.headerOnlyOwnCheckboxChecked,
+              ]}
+            >
+              {onlyOwnOrders ? (
+                <ThemedText style={styles.headerOnlyOwnCheckboxMark}>✓</ThemedText>
+              ) : null}
+            </View>
+            <ThemedText style={styles.headerOnlyOwnLabel}>Только свои</ThemedText>
+          </Pressable>
+        ) : null,
     });
-  }, [navigation, t]);
+  }, [navigation, t, isCustomer, onlyOwnOrders]);
 
   const handleApplyFilters = () => {
     const next: OrdersFilters = {};
-    if (statusFilter.trim()) next.status = statusFilter.trim();
+    if (selectedStatuses.length > 0) next.statuses = selectedStatuses;
     if (customerNameFilter.trim()) next.customer_name = customerNameFilter.trim();
     if (dateFromFilter.trim()) next.date_from = dateFromFilter.trim();
     if (dateToFilter.trim()) next.date_to = dateToFilter.trim();
     if (placeFilter.trim()) next.place = placeFilter.trim();
+    if (isCustomer && onlyOwnOrders) next.only_own = true;
 
     setFilters(next);
     load(false, next);
@@ -129,7 +206,11 @@ export default function OrdersScreen() {
       return;
     }
     try {
-      const orders = await getOrders({ customer_name: query });
+      const orders = await getOrders({
+        customer_name: query,
+        statuses: selectedStatuses,
+        only_own: isCustomer && onlyOwnOrders ? true : undefined,
+      }, token);
       const names = Array.from(
         new Set(
           orders
@@ -151,7 +232,11 @@ export default function OrdersScreen() {
       return;
     }
     try {
-      const orders = await getOrders({ place: query });
+      const orders = await getOrders({
+        place: query,
+        statuses: selectedStatuses,
+        only_own: isCustomer && onlyOwnOrders ? true : undefined,
+      }, token);
       const places = Array.from(
         new Set(
           orders
@@ -166,15 +251,40 @@ export default function OrdersScreen() {
   };
 
   const handleResetFilters = () => {
-    setStatusFilter('');
+    setSelectedStatuses(['active']);
     setCustomerNameFilter('');
     setDateFromFilter('');
     setDateToFilter('');
     setPlaceFilter('');
     setCustomerNameSuggestions([]);
     setPlaceSuggestions([]);
-    setFilters(undefined);
-    load(false, undefined);
+    setOnlyOwnOrders(isCustomer);
+    const next: OrdersFilters = {
+      statuses: ['active'],
+      ...(isCustomer ? { only_own: true } : {}),
+    };
+    setFilters(next);
+    load(false, next);
+  };
+
+  const handleToggleOnlyOwn = () => {
+    if (!isCustomer) return;
+    setOnlyOwnOrders((prev) => {
+      const nextVal = !prev;
+      const base = (filters ?? {}) as OrdersFilters;
+      let nextFilters: OrdersFilters | undefined;
+      if (nextVal) {
+        nextFilters = { ...base, only_own: true };
+      } else {
+        // Убираем фильтр `only_own`, оставляя остальные применённые фильтры.
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { only_own: _onlyOwn, ...rest } = base;
+        nextFilters = Object.keys(rest).length > 0 ? (rest as OrdersFilters) : undefined;
+      }
+      setFilters(nextFilters);
+      load(false, nextFilters);
+      return nextVal;
+    });
   };
 
   if (listLoading && !list?.length) {
@@ -213,7 +323,7 @@ export default function OrdersScreen() {
           style={styles.searchInput}
           value={quickSearch}
           onChangeText={setQuickSearch}
-          placeholder="Поиск по месту (откуда/докуда)"
+          placeholder="Поиск по месту (откуда/куда)"
           placeholderTextColor="#9CA3AF"
         />
       </View>
@@ -246,15 +356,27 @@ export default function OrdersScreen() {
             <ThemedText type="subtitle" style={styles.filtersTitle}>
               {t('orders_filters_title') ?? 'Фильтры'}
             </ThemedText>
+            {isCustomer && (
+              <Pressable onPress={handleToggleOnlyOwn} style={styles.onlyOwnRow}>
+                <View style={[styles.onlyOwnCheckbox, onlyOwnOrders && styles.onlyOwnCheckboxChecked]}>
+                  {onlyOwnOrders ? <ThemedText style={styles.onlyOwnCheckboxMark}>✓</ThemedText> : null}
+                </View>
+                <ThemedText style={styles.onlyOwnLabel}>Только свои заказы</ThemedText>
+              </Pressable>
+            )}
             <View style={styles.filtersField}>
               <ThemedText style={styles.filtersLabel}>{t('orders_filter_status') ?? 'Статус'}</ThemedText>
               <View style={styles.statusChipsRow}>
                 {(['active', 'expired', 'completed', 'canceled'] as OrderStatus[]).map((status) => {
-                  const selected = statusFilter === status;
+                  const selected = selectedStatuses.includes(status);
                   return (
                     <Pressable
                       key={status}
-                      onPress={() => setStatusFilter(selected ? '' : status)}
+                      onPress={() => {
+                        setSelectedStatuses((prev) =>
+                          prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
+                        );
+                      }}
                       style={[
                         styles.statusChip,
                         selected && styles.statusChipSelected,
@@ -543,6 +665,73 @@ const styles = StyleSheet.create({
   statusChipTextSelected: {
     color: '#fff',
     fontWeight: '600',
+  },
+  info: {
+    marginTop: 6,
+    opacity: 0.85,
+    fontSize: 13,
+  },
+  onlyOwnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  onlyOwnCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  onlyOwnCheckboxChecked: {
+    backgroundColor: '#0a7ea4',
+    borderColor: '#0a7ea4',
+  },
+  onlyOwnCheckboxMark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 14,
+  },
+  onlyOwnLabel: {
+    fontSize: 14,
+    opacity: 0.9,
+  },
+  headerRightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  headerOnlyOwnToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  headerOnlyOwnCheckbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerOnlyOwnCheckboxChecked: {
+    backgroundColor: '#0a7ea4',
+    borderColor: '#0a7ea4',
+  },
+  headerOnlyOwnCheckboxMark: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 12,
+  },
+  headerOnlyOwnLabel: {
+    fontSize: 12,
+    opacity: 0.95,
   },
 });
 

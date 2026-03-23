@@ -157,6 +157,9 @@ function MainHeader({
       <ThemedText style={styles.apiHint}>
         API: {API_BASE}
       </ThemedText>
+      <ThemedText style={styles.ordersStatusHint}>
+        {t('test_orders_status_note')}
+      </ThemedText>
       <Pressable
         style={({ pressed }) => [
           styles.button,
@@ -499,7 +502,14 @@ const styles = StyleSheet.create({
   apiHint: {
     fontSize: 12,
     opacity: 0.6,
-    marginBottom: 24,
+    marginBottom: 8,
+  },
+  ordersStatusHint: {
+    fontSize: 12,
+    opacity: 0.7,
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 8,
   },
   button: {
     marginBottom: 12,

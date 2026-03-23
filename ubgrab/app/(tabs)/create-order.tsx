@@ -42,6 +42,7 @@ export default function CreateOrderScreen() {
   const [whereFrom, setWhereFrom] = useState('');
   const [whereTo, setWhereTo] = useState('');
   const [price, setPrice] = useState('');
+  const [information, setInformation] = useState('');
   const [dateWhen, setDateWhen] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [courierId, setCourierId] = useState<number | null>(null);
@@ -74,6 +75,7 @@ export default function CreateOrderScreen() {
     const to = whereTo.trim();
     const priceTrimmed = price.replace(',', '.').trim();
     const priceNum = priceTrimmed === '' ? 0 : parseFloat(priceTrimmed);
+    const informationTrimmed = information.trim();
 
     if (!from) {
       Alert.alert(t('common_error'), t('create_error_from'));
@@ -103,13 +105,15 @@ export default function CreateOrderScreen() {
         where_to: to,
         price: priceNum,
         date_when: formatDateForApi(dateWhen),
-        status: 'new',
+        status: 'active',
+        information: informationTrimmed.length > 0 ? informationTrimmed : undefined,
         courier_id: courierId ?? undefined,
       });
       Alert.alert(t('common_done'), t('create_done'));
       setWhereFrom('');
       setWhereTo('');
       setPrice('');
+      setInformation('');
       setDateWhen(null);
       setCourierId(null);
     } catch (err) {
@@ -196,6 +200,18 @@ export default function CreateOrderScreen() {
           placeholder={t('create_price_placeholder')}
           placeholderTextColor="#687076"
           keyboardType="decimal-pad"
+        />
+
+        <ThemedText style={styles.label}>Информация</ThemedText>
+        <TextInput
+          style={[styles.input, styles.informationInput]}
+          value={information}
+          onChangeText={setInformation}
+          placeholder="Введите информацию (необязательно)"
+          placeholderTextColor="#687076"
+          multiline
+          numberOfLines={4}
+          textAlignVertical="top"
         />
 
         <ThemedText style={styles.label}>{t('create_date')}</ThemedText>
@@ -370,4 +386,5 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   datePickerDoneText: { fontSize: 16, fontWeight: '600' },
+  informationInput: { minHeight: 96 },
 });

@@ -28,6 +28,7 @@ class OrderService:
         deduction_amount: float,
         status: str = "new",
         courier_id: int | None = None,
+        information: str | None = None,
     ) -> Order:
         """Создать заказ: списать deduction_amount с баланса, заказ сохраняем с price=0 (цену заказа не трогаем)."""
         logger.info("create_with_balance_deduction: account_id=%s customer_id=%s deduction_amount=%s", account_id, customer_id, deduction_amount)
@@ -44,6 +45,7 @@ class OrderService:
             customer_id=customer_id,
             status=status,
             courier_id=courier_id,
+            information=information,
         )
         logger.info("create_with_balance_deduction: заказ создан order_id=%s", order.id)
         return order
@@ -57,6 +59,7 @@ class OrderService:
         customer_id: int,
         status: str = "new",
         courier_id: int | None = None,
+        information: str | None = None,
     ) -> Order:
         if not where_to or not where_to.strip():
             raise ValueError("Адрес назначения обязателен")
@@ -64,6 +67,9 @@ class OrderService:
             raise ValueError("Адрес отправления обязателен")
         if price < 0:
             raise ValueError("Цена не может быть отрицательной")
+        info_trimmed = information.strip() if information is not None else None
+        if info_trimmed == "":
+            info_trimmed = None
         order = Order(
             id=0,
             where_to=where_to.strip(),
@@ -73,6 +79,7 @@ class OrderService:
             date_when=date_when,
             customer_id=customer_id,
             courier_id=courier_id,
+            information=info_trimmed,
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
@@ -89,8 +96,9 @@ class OrderService:
         *,
         skip: int = 0,
         limit: int = 100,
-        status: str | None = None,
+        statuses: list[str] | None = None,
         customer_name: str | None = None,
+        customer_id: int | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
         place: str | None = None,
@@ -98,8 +106,9 @@ class OrderService:
         return await self._repo.search(
             skip=skip,
             limit=limit,
-            status=status,
+            statuses=statuses,
             customer_name=customer_name,
+            customer_id=customer_id,
             date_from=date_from,
             date_to=date_to,
             place=place,
@@ -114,6 +123,7 @@ class OrderService:
         status: str | None = None,
         date_when: date | None = None,
         courier_id: int | None = None,
+        information: str | None = None,
     ) -> Order | None:
         order = await self._repo.get_by_id(id)
         if not order:
@@ -125,6 +135,7 @@ class OrderService:
             status=status,
             date_when=date_when,
             courier_id=courier_id,
+            information=information,
         )
         return await self._repo.save(order)
 

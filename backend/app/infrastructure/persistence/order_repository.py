@@ -22,6 +22,7 @@ class OrderRepository(IOrderRepository):
             date_when=model.date_when,
             customer_id=model.customer_id,
             courier_id=model.courier_id,
+            information=model.information,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )
@@ -40,8 +41,9 @@ class OrderRepository(IOrderRepository):
         *,
         skip: int = 0,
         limit: int = 100,
-        status: str | None = None,
+        statuses: list[str] | None = None,
         customer_name: str | None = None,
+        customer_id: int | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
         place: str | None = None,
@@ -51,11 +53,13 @@ class OrderRepository(IOrderRepository):
             .join(CustomerModel, OrderModel.customer_id == CustomerModel.id)
             .join(AccountModel, CustomerModel.account_id == AccountModel.id, isouter=True)
         )
-        if status is not None:
-            stmt = stmt.where(OrderModel.status == status)
+        if statuses is not None and len(statuses) > 0:
+            stmt = stmt.where(OrderModel.status.in_(statuses))
         if customer_name:
             pattern_name = f"%{customer_name}%"
             stmt = stmt.where(AccountModel.name.ilike(pattern_name))
+        if customer_id is not None:
+            stmt = stmt.where(OrderModel.customer_id == customer_id)
         if date_from is not None:
             stmt = stmt.where(OrderModel.date_when >= date_from)
         if date_to is not None:
@@ -81,6 +85,7 @@ class OrderRepository(IOrderRepository):
             date_when=order.date_when,
             customer_id=order.customer_id,
             courier_id=order.courier_id,
+            information=order.information,
         )
         self._session.add(model)
         await self._session.flush()
@@ -96,6 +101,7 @@ class OrderRepository(IOrderRepository):
         model.status = order.status
         model.date_when = order.date_when
         model.courier_id = order.courier_id
+        model.information = order.information
         await self._session.flush()
         await self._session.refresh(model)
         return self._to_entity(model)

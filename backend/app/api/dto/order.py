@@ -17,6 +17,7 @@ class OrderBase(BaseModel):
     price: float = Field(default=0, ge=0)
     status: OrderStatus = Field(default=OrderStatus.ACTIVE)
     date_when: date
+    information: str | None = Field(default=None)
     customer_id: int
     courier_id: int | None = None
 
@@ -27,6 +28,7 @@ class OrderCreate(BaseModel):
     where_from: str = Field(..., min_length=1, max_length=255)
     date_when: date
     status: OrderStatus = Field(default=OrderStatus.ACTIVE)
+    information: str | None = Field(default=None)
 
 
 class OrderUpdate(BaseModel):
@@ -35,6 +37,7 @@ class OrderUpdate(BaseModel):
     price: float | None = Field(None, ge=0)
     status: OrderStatus | None = None
     date_when: date | None = None
+    information: str | None = Field(default=None)
     customer_id: int | None = None
     courier_id: int | None = None
 

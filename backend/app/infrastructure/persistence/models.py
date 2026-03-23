@@ -68,6 +68,7 @@ class OrderModel(Base, TimestampMixin):
     date_when: Mapped[date] = mapped_column(Date, nullable=False)
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=False)
     courier_id: Mapped[int | None] = mapped_column(ForeignKey("couriers.id"), nullable=True)
+    information: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     owner: Mapped["CustomerModel"] = relationship("CustomerModel", back_populates="orders")
     executor: Mapped["CourierModel | None"] = relationship("CourierModel", back_populates="orders")

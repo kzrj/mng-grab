@@ -16,6 +16,7 @@ class Order:
     date_when: date
     customer_id: int
     courier_id: int | None
+    information: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -35,6 +36,7 @@ class Order:
         status: str | None = None,
         date_when: date | None = None,
         courier_id: int | None = None,
+        information: str | None = None,
     ) -> None:
         """Обновление данных заказа."""
         if where_to is not None:
@@ -55,3 +57,6 @@ class Order:
             self.date_when = date_when
         if courier_id is not None:
             self.courier_id = courier_id
+        if information is not None:
+            info_trimmed = information.strip()
+            self.information = info_trimmed if info_trimmed else None

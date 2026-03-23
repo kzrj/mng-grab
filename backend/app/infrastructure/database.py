@@ -48,6 +48,12 @@ async def _run_account_migrations(conn) -> None:
         ADD COLUMN IF NOT EXISTS balance DOUBLE PRECISION NOT NULL DEFAULT 100
     """))
 
+    # Поле "information" (необязательный текст) для заказов.
+    await conn.execute(text("""
+        ALTER TABLE orders
+        ADD COLUMN IF NOT EXISTS information TEXT
+    """))
+
 
 async def get_db() -> AsyncSession:
     async with async_session() as session:

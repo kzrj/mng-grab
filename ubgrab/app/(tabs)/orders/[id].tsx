@@ -186,6 +186,13 @@ export default function OrderDetailScreen() {
       <ThemedText style={styles.label}>{t('orders_detail_date')}</ThemedText>
       <ThemedText style={styles.value}>{formatDateTime(order.date_when)}</ThemedText>
 
+      {order.information ? (
+        <>
+          <ThemedText style={styles.label}>Информация</ThemedText>
+          <ThemedText style={styles.value}>{order.information}</ThemedText>
+        </>
+      ) : null}
+
       <ThemedText style={styles.label}>{t('orders_detail_created')}</ThemedText>
       <ThemedText style={styles.value}>{formatDateTime(order.created_at)}</ThemedText>
 

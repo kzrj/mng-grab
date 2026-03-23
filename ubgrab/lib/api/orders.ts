@@ -10,6 +10,7 @@ export type Order = {
   price: number;
   status: OrderStatus;
   date_when: string;
+  information?: string | null;
   customer_id: number;
   courier_id: number | null;
   created_at: string;
@@ -34,32 +35,38 @@ export type Customer = {
 };
 
 export type OrdersFilters = {
-  status?: string;
+  statuses?: OrderStatus[];
   customer_name?: string;
   date_from?: string;
   date_to?: string;
   place?: string;
+  only_own?: boolean;
 };
 
 const ORDERS_URL = `${API_V1}/orders`;
 const COURIERS_URL = `${API_V1}/couriers`;
 const CUSTOMERS_URL = `${API_V1}/customers`;
 
-export function getOrders(filters?: OrdersFilters) {
+export function getOrders(filters?: OrdersFilters, token?: string | null) {
   let url = ORDERS_URL;
   if (filters) {
     const params = new URLSearchParams();
-    if (filters.status) params.append('status', filters.status);
+    if (filters.statuses && filters.statuses.length > 0) {
+      params.set('statuses', filters.statuses.join(','));
+    }
     if (filters.customer_name) params.append('customer_name', filters.customer_name);
     if (filters.date_from) params.append('date_from', filters.date_from);
     if (filters.date_to) params.append('date_to', filters.date_to);
     if (filters.place) params.append('place', filters.place);
+    if (filters.only_own) params.append('only_own', 'true');
     const qs = params.toString();
     if (qs) {
       url = `${ORDERS_URL}?${qs}`;
     }
   }
-  return fetchJson<Order[]>(url);
+  return fetchJson<Order[]>(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
 }
 
 export function getOrder(id: string | number) {
@@ -87,6 +94,7 @@ export function createOrderApi(
     date_when: string;
     status?: string;
     courier_id?: number | null;
+    information?: string | null;
   }
 ) {
   return fetchJson(ORDERS_URL, {

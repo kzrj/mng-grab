@@ -7,7 +7,7 @@ type OrdersState = {
   byId: Record<number, Order>;
   listLoading: boolean;
   listError: string | null;
-  loadOrders: (filters?: OrdersFilters) => Promise<void>;
+  loadOrders: (filters?: OrdersFilters, token?: string | null) => Promise<void>;
   loadOrder: (id: string | number) => Promise<Order | null>;
   setOrders: (orders: Order[]) => void;
   clearOrders: () => void;
@@ -19,10 +19,10 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
   listLoading: false,
   listError: null,
 
-  loadOrders: async (filters) => {
+  loadOrders: async (filters, token) => {
     set({ listLoading: true, listError: null });
     try {
-      const data = await getOrders(filters);
+      const data = await getOrders(filters, token);
       const byId: Record<number, Order> = {};
       data.forEach((o) => {
         byId[o.id] = o;

@@ -8,6 +8,7 @@ function OrdersHeader(props: any) {
   const { options, navigation, back } = props;
   const title = options.title ?? options.headerTitle ?? '';
   const headerRight = options.headerRight?.();
+  const headerMiddle = options.headerMiddle?.();
 
   return (
     <View style={styles.headerContainer}>
@@ -20,13 +21,13 @@ function OrdersHeader(props: any) {
           <Text style={styles.backText}>{'‹'}</Text>
         </Pressable>
       ) : null}
-      <View style={styles.headerCenterRight}>
-        <Text
-          numberOfLines={1}
-          style={styles.headerTitle}
-        >
-          {title}
-        </Text>
+      <View style={styles.headerMain}>
+        <View style={styles.headerLeft}>
+          <Text numberOfLines={1} style={styles.headerTitle}>
+            {title}
+          </Text>
+        </View>
+        <View style={styles.headerMiddle}>{headerMiddle ? headerMiddle : null}</View>
         {headerRight ? <View style={styles.headerRight}>{headerRight}</View> : null}
       </View>
     </View>
@@ -74,11 +75,19 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 22,
   },
-  headerCenterRight: {
+  headerMain: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+  },
+  headerLeft: {
+    flex: 0,
+    justifyContent: 'flex-start',
+  },
+  headerMiddle: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 15,
@@ -86,6 +95,7 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     marginLeft: 8,
+    alignItems: 'flex-end',
   },
 });
 

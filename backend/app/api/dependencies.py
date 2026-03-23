@@ -1,6 +1,7 @@
 """DI: создание репозиториев и сервисов для FastAPI Depends."""
 
 from fastapi import Depends, Header, HTTPException
+from fastapi import Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.account.service import AccountService
@@ -112,6 +113,25 @@ async def get_current_customer_id(
             status_code=403,
             detail="Доступ только для заказчика",
         )
+    return customer.id
+
+
+async def get_optional_current_customer_id(
+    only_own: bool = Query(False, alias="only_own"),
+    account_id: int | None = Depends(get_optional_account_id),
+    repo: CustomerRepository = Depends(get_customer_repository),
+) -> int | None:
+    """
+    Если `only_own=true`, то возвращаем customer_id текущего заказчика.
+    Иначе возвращаем None (фильтр не применяется).
+    """
+    if not only_own:
+        return None
+    if account_id is None:
+        raise HTTPException(status_code=401, detail="Требуется авторизация")
+    customer = await repo.get_by_account_id(account_id)
+    if not customer:
+        raise HTTPException(status_code=403, detail="Доступ только для заказчика")
     return customer.id
 
 
