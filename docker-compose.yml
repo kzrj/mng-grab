@@ -82,6 +82,11 @@ services:
   expo:
     build: ./ubgrab
     command: ["npx", "expo", "start"]
+    volumes:
+      # Кэш Metro/Expo живёт в контейнере, и при `docker compose down` пропадает.
+      # Примонтируем его в volume, чтобы после рестарта загрузка `expo-router/entry.js` была быстрее.
+      - expo_cache:/root/.expo
+      - metro_cache:/tmp/metro-cache
     env_file: .env
     ports:
       - "8081:8081"   # Metro bundler
@@ -99,3 +104,5 @@ services:
 
 volumes:
   postgres_data:
+  expo_cache:
+  metro_cache:

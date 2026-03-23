@@ -21,10 +21,6 @@ celery_app.conf.update(
     timezone="Europe/Moscow",
     enable_utc=True,
     beat_schedule={
-        "print-orders-every-10-seconds": {
-            "task": "worker.tasks.orders.print_orders",
-            "schedule": 10.0,
-        },
         "expire-orders-every-5-minutes": {
             "task": "worker.tasks.orders.expire_orders",
             "schedule": 300.0,
